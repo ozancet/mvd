@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MVD Analysis Suite · Mutant Variety Database</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --iaea:#005A8E;--accent:#00A19A;--amber:#E07B00;--purple:#6B3FA0;
+  --success:#27AE60;--danger:#C0392B;
+  --bg:#0D1B2A;--bg2:#122336;--card:#172E44;--border:#243F5C;
+  --hover:#1A3A55;--inp:#0A1520;--txt:#E4EEF8;--muted:#7A9BBB;
+}
+html{font-size:15px}
+body{font-family:'Segoe UI','Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden}
+#sb{width:248px;min-width:248px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.logo{padding:16px 18px 14px;background:linear-gradient(135deg,#001F3D,#004A7A);border-bottom:1px solid var(--border)}
+.logo .t1{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.logo .t2{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.2px;margin-top:3px}
+.logo .t3{font-size:9.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.sec{padding:12px 15px 4px;font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px}
+.nb{display:flex;align-items:center;gap:11px;padding:13px 14px;margin:2px 7px;border-radius:9px;cursor:pointer;border:none;background:transparent;color:var(--txt);font-size:14.5px;font-family:inherit;text-align:left;width:calc(100% - 14px);transition:background .15s;min-height:46px}
+.nb .ic{font-size:18px;width:24px;text-align:center}
+.nb:hover{background:rgba(0,90,142,.25)}.nb.active{background:var(--iaea);color:#fff;font-weight:600}
+.sb-bot{margin-top:auto;border-top:1px solid var(--border);padding:9px 6px}
+.sb-bot a,.sb-bot button{display:block;width:100%;padding:7px 12px;font-size:11.5px;color:var(--accent);text-decoration:none;border-radius:6px;border:none;background:transparent;cursor:pointer;text-align:left;font-family:inherit}
+.sb-bot a:hover,.sb-bot button:hover{background:rgba(0,161,154,.15)}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{height:50px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;flex-shrink:0}
+.pt{font-size:15px;font-weight:700}
+.badge{margin-left:auto;font-size:12px;padding:4px 13px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+.badge.ok{border-color:var(--success);color:var(--success)}
+#content{flex:1;overflow-y:auto;padding:18px 22px}
+#sbar{height:27px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;font-size:11px;color:var(--muted);flex-shrink:0}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px}
+.ct{font-size:13px;font-weight:700;color:var(--iaea);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+.cb{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px}
+.cb label{font-size:12px;color:var(--muted);white-space:nowrap}
+select,input[type=text],input[type=number]{background:var(--inp);border:1px solid var(--border);color:var(--txt);padding:6px 10px;border-radius:6px;font-family:inherit;font-size:13px;outline:none;transition:border-color .2s}
+select:focus,input:focus{border-color:var(--iaea)}select{cursor:pointer}
+
+/* suggestion dropdown */
+.sw{position:relative;display:inline-block}
+.sl{position:absolute;top:calc(100% + 3px);left:0;z-index:200;background:var(--card);border:1px solid var(--iaea);border-radius:8px;min-width:200px;max-height:210px;overflow-y:auto;box-shadow:0 8px 28px rgba(0,0,0,.45);display:none}
+.sl.open{display:block}
+.si{padding:8px 13px;font-size:13px;cursor:pointer;color:var(--txt)}
+.si:hover,.si.sel{background:var(--hover)}
+.si .m{color:var(--accent);font-weight:700}
+.sw-warn{padding:7px 13px;font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)}
+.sw-none{padding:8px 13px;font-size:12px;color:var(--muted)}
+
+.btn{padding:10px 18px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:42px}
+.bp{background:var(--iaea);color:#fff}.ba{background:var(--accent);color:#fff}
+.bam{background:var(--amber);color:#fff}.bpu{background:var(--purple);color:#fff}
+.bo{background:transparent;border:1px solid var(--border);color:var(--txt)}
+.bs{background:rgba(0,90,142,.18);border:1px solid var(--iaea);color:var(--accent);min-height:34px;padding:6px 13px;font-size:12.5px}
+.btn:hover{opacity:.84;transform:translateY(-1px)}.btn:active{transform:none}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tw{overflow:auto;max-height:350px;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--bg2);color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--border);text-align:left}
+tbody tr:hover{background:var(--hover)}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+tbody tr:last-child td{border-bottom:none}
+.num{text-align:right;font-variant-numeric:tabular-nums}.pct{color:var(--accent)}
+.rb{background:var(--inp);border:1px solid var(--border);border-radius:8px;padding:13px 16px;font-family:'Courier New',monospace;font-size:12px;white-space:pre-wrap;line-height:1.65;margin-top:9px;max-height:270px;overflow-y:auto}
+.ok{color:var(--success)}.warn{color:var(--amber)}
+.pval{font-size:15px;font-weight:bold}.pval.ok{color:var(--success)}.pval.warn{color:var(--amber)}
+.verdict{font-size:13px;font-weight:bold;white-space:normal;display:block;margin-top:4px;line-height:1.4}
+.sparse{color:var(--amber);font-size:11.5px;white-space:normal;display:block;margin-top:6px;line-height:1.4}
+.chb{border-radius:8px;overflow:hidden;min-height:370px}
+.dl-row{display:flex;gap:7px;margin-top:7px;justify-content:flex-end}
+.two{display:grid;grid-template-columns:1fr 1.9fr;gap:14px;align-items:start}
+.pbw{background:var(--bg2);border-radius:4px;height:5px;overflow:hidden;margin:8px 0}
+.pbf{height:100%;background:linear-gradient(90deg,var(--iaea),var(--accent));transition:width .4s}
+.flog{font-size:12px;min-height:32px;padding:4px 0;line-height:1.8;color:var(--muted)}
+.flog .fok{color:var(--success)}.flog .ferr{color:var(--danger)}.flog .fact{color:var(--txt)}
+.uz{border:2px dashed var(--border);border-radius:10px;padding:26px 20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);margin-top:12px}
+.uz:hover,.uz.drag{border-color:var(--iaea);background:rgba(0,90,142,.07)}
+.uz-ico{font-size:38px;margin-bottom:8px}.uz-title{font-size:14px;font-weight:600;color:var(--txt)}.uz-sub{font-size:12px;margin-top:4px}
+#fi{display:none}
+.manual{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:14px 17px;margin-top:12px;font-size:13px;line-height:1.7;color:var(--muted)}
+.manual strong{color:var(--txt)}.manual a{color:var(--accent)}
+.manual ol{margin:8px 0 0 20px}.manual li{margin-bottom:5px}
+.cors-note{margin-top:9px;padding:9px 12px;background:rgba(0,90,142,.12);border-radius:6px;font-size:12px}
+
+/* summary cards */
+.sg{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sc{flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
+.sc .sv{font-size:26px;font-weight:800;line-height:1.15}
+.sc .sl2{font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:500}
+
+/* 2-col home */
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+@media(max-width:1080px){.home-grid{grid-template-columns:1fr}}
+.hero{background:linear-gradient(135deg,#001F3D 0%,#003F6B 55%,#002A50 100%);border-radius:12px;padding:28px 28px 24px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;top:-60px;right:-60px;width:230px;height:230px;background:radial-gradient(circle,rgba(0,161,154,.12) 0%,transparent 70%);pointer-events:none}
+.hero h1{font-size:24px;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.2}
+.hero p{font-size:13.5px;color:#9BBDD4;line-height:1.7}
+.hero .src{font-size:12px;color:var(--muted);margin-top:12px}
+.hero .src a{color:var(--accent)}
+.hbadge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(0,161,154,.2);border:1px solid var(--accent);color:var(--accent);margin:10px 5px 0 0}
+.load-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+
+/* doc boxes */
+.doc{background:rgba(0,90,142,.07);border-left:3px solid var(--iaea);border-radius:0 9px 9px 0;padding:13px 16px;margin-bottom:13px;font-size:13px;line-height:1.65;color:var(--muted)}
+.doc strong{color:var(--txt)}.doc em{color:var(--accent)}
+.doc ul{margin:8px 0 0 18px}.doc li{margin-bottom:4px}
+.dtag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-right:5px;background:rgba(0,90,142,.3);color:var(--accent);margin-bottom:5px}
+
+/* Python panel */
+.pybox{margin-top:14px;border:1px solid #2A3F20;border-radius:9px;overflow:hidden}
+.pyhead{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;background:#152010;cursor:pointer;user-select:none}
+.pyhead .pytitle{font-size:12px;font-weight:600;color:#7DBF6E;display:flex;align-items:center;gap:8px}
+.pytbtn{font-size:11px;padding:3px 10px;background:rgba(125,191,110,.15);border:1px solid #4A7A40;color:#7DBF6E;border-radius:5px;cursor:pointer;font-family:inherit}
+.pybody{display:none;background:#0E1A0C;padding:16px 18px;overflow-x:auto}
+.pybody.open{display:block}
+.pybody pre{font-family:'Courier New',monospace;font-size:12px;line-height:1.75;color:#C8DFC4}
+.pybody .cmt{color:#5C8A50}.pybody .kw{color:#7EC8E3}.pybody .fn{color:#FFD580}
+.pylibs{margin-top:12px;padding:10px 12px;background:rgba(125,191,110,.06);border:1px solid #2A3F20;border-radius:6px;font-size:12px;line-height:1.7}
+.pylibs .ln{color:#FFD580;font-weight:600}.pylibs .ld{color:#8BAF85}
+
+/* module grid */
+.modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:11px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s}
+.mc:hover{border-color:var(--iaea);transform:translateY(-2px);box-shadow:0 4px 18px rgba(0,90,142,.2)}
+.mc .mi{font-size:22px;margin-bottom:8px}.mc .mt{font-size:13.5px;font-weight:700;color:var(--txt);margin-bottom:5px}
+.mc .md{font-size:12.5px;color:var(--muted);line-height:1.55}
+.mc .ms{margin-top:9px}.mtag{display:inline-block;padding:2px 7px;border-radius:10px;font-weight:700;background:rgba(0,90,142,.25);color:var(--accent);margin-right:3px;font-size:11px}
+
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="sb">
+  <div class="logo">
+    <div class="t1">MVD <span style="color:var(--accent)">Suite</span></div>
+    <div class="t2">Analysis Platform v4</div>
+    <div class="t3">Mutant Variety Database<br>Statistical Analysis Tool</div>
+  </div>
+  <div class="sec">Modules</div>
+  <button class="nb active" onclick="nav('home')"><span class="ic">🏠</span>Overview &amp; Data</button>
+  <button class="nb" onclick="nav('crop')"><span class="ic">🌿</span>Crop Explorer</button>
+  <button class="nb" onclick="nav('desc')"><span class="ic">📊</span>Dataset Overview</button>
+  <button class="nb" onclick="nav('temporal')"><span class="ic">📅</span>Temporal Analysis</button>
+  <button class="nb" onclick="nav('compare')"><span class="ic">🌍</span>Cross-Table &amp; Compare</button>
+  <button class="nb" onclick="nav('mutagen')"><span class="ic">🧬</span>Mutagen Analysis</button>
+  <button class="nb" onclick="nav('trait')"><span class="ic">🏷️</span>Trait Analysis</button>
+  <button class="nb" onclick="nav('explant')"><span class="ic">🧫</span>Explant × Trait</button>
+  <button class="nb" onclick="nav('advanced')"><span class="ic">📈</span>Advanced Statistics</button>
+  <button class="nb" onclick="nav('export')"><span class="ic">💾</span>Export &amp; Report</button>
+  <div class="sb-bot">
+    <a href="https://mvd.iaea.org" target="_blank">🌐 mvd.iaea.org</a>
+    <a href="https://nucleus.iaea.org/sites/mvd" target="_blank">📖 MVD Documentation</a>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <span class="pt" id="ptitle">🏠 Overview &amp; Data Loading</span>
+    <span class="badge" id="badge">No data loaded</span>
+  </div>
+  <div id="content">
+
+  <!-- ═══ HOME ═══════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-home">
+    <div class="home-grid">
+      <div class="hero">
+        <h1>MVD Analysis Suite</h1>
+        <p>A statistical analysis platform for the <strong style="color:#fff">IAEA Mutant Variety Database (MVD)</strong> — the world's most comprehensive record of officially released mutant crop varieties developed through induced mutagenesis.</p>
+        <p style="margin-top:10px;font-size:13px;color:#8BAEC8">Analyse global trends, compare programmes, test statistical hypotheses, and export publication-quality charts — no installation needed.</p>
+        <span class="hbadge">9 Analysis Modules</span>
+        <span class="hbadge">Region &amp; Country Filters</span>
+        <span class="hbadge">PNG / SVG Export</span>
+        <span class="hbadge">Python Code Panels</span>
+        <div class="src">Data: <a href="https://mvd.iaea.org" target="_blank">IAEA Mutant Variety Database (mvd.iaea.org)</a></div>
+      </div>
+      <div class="load-card">
+        <div class="ct">📥 Load MVD Data</div>
+        <div class="btn-row">
+          <button class="btn bp" id="btn-repo" onclick="loadRepoCSV()">📦 Load Bundled MVD Data</button>
+          <button class="btn ba" onclick="document.getElementById('fi').click()">📁 Load Local CSV</button>
+          <button class="btn bam" onclick="loadDemo()">🧪 Demo Data</button>
+        </div>
+        <input type="file" id="fi" accept=".csv" onchange="loadCSV(event)">
+        <div class="pbw"><div class="pbf" id="pb" style="width:0%"></div></div>
+        <div class="flog" id="flog"></div>
+        <div class="manual" id="manual" style="display:none">
+          <strong>Manual download (~30 seconds):</strong>
+          <ol>
+            <li>Go to <a href="https://mvd.iaea.org/search-varieties" target="_blank"><strong>mvd.iaea.org/search-varieties</strong></a></li>
+            <li>Leave all filters blank → click <strong>Search</strong></li>
+            <li>Click <strong>Download / Export CSV</strong> above the results table</li>
+            <li>Drag the file below, or click <strong>Load Local CSV</strong></li>
+          </ol>
+          <div class="cors-note"><strong style="color:var(--txt)">Why can't the button fetch directly?</strong><br>
+          Browsers block cross-origin requests (CORS policy). When deployed on a server the proxy handles this automatically. Locally, use the manual method.</div>
+        </div>
+        <div class="uz" id="uz"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="dropFile(event)"
+          onclick="document.getElementById('fi').click()">
+          <div class="uz-ico">📄</div>
+          <div class="uz-title">Drag &amp; drop CSV here</div>
+          <div class="uz-sub">or click to browse · UTF-8, Latin-1, CP-1252 supported</div>
+        </div>
+      </div>
+    </div>
+    <div id="scards" style="display:none"></div>
+    <div class="card">
+      <div class="ct">🗂️ What Each Module Does</div>
+      <div class="modgrid" id="modgrid"></div>
+    </div>
+    <div class="card" id="colcard" style="display:none">
+      <div class="ct">📐 Column Info &amp; Data Quality</div>
+      <div class="tw" id="coltbl"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══ CROP EXPLORER ═══════════════════════════════════════════ -->
+  <div class="panel" id="panel-crop">
+    <div class="doc">
+      <span class="dtag">SINGLE SPECIES</span><span class="dtag">ONE-PAGE DASHBOARD</span>
+      <strong>What it does:</strong> Pick one crop (by common or Latin name) and get its complete MVD profile on a single page. <em>The fastest way to brief yourself on a species before reading the literature.</em>
+      <ul>
+        <li><strong>Botanical search:</strong> type "lens" to find Lentil (<em>Lens culinaris</em>) — searches both Crop and Species columns, with typo tolerance</li>
+        <li><strong>Sections:</strong> release timeline · country spread · mutagen mix · trait categories · explant types · top institutions · this crop's Explant × Trait map</li>
+        <li><strong>Use it for:</strong> deciding which mutagen/explant combinations are already well-explored for a target species vs. open ground</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🌿 Choose a Species</div>
+      <div class="cb">
+        <label>Crop / Species:</label>
+        <div class="sw"><input type="text" id="ce-q" placeholder="e.g. Rice, Lens, Hordeum…" style="width:220px" oninput="ceSugg(this)" onblur="closeSugg('ce-sl')"><div class="sl" id="ce-sl"></div></div>
+        <button class="btn bp" onclick="ceRun()">▶ Build Dashboard</button>
+        <span id="ce-head" style="margin-left:8px;font-size:13px;color:var(--muted)"></span>
+      </div>
+      <div id="ce-cards" style="display:none"></div>
+    </div>
+    <div class="card" id="ce-body" style="display:none">
+      <div class="ct">📅 Release Timeline</div>
+      <div class="chb" id="ce-time"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-time')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-time','crop_timeline','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-time','crop_timeline','svg')">⬇ SVG</button></div>
+
+      <div class="ct" style="margin-top:18px">🌍 Top Countries</div>
+      <div class="chb" id="ce-country"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-country')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-country','crop_country','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-country','crop_country','svg')">⬇ SVG</button></div>
+
+      <div class="ct" style="margin-top:18px">🧬 Mutagen Mix</div>
+      <div class="chb" id="ce-mut"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-mut')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-mut','crop_mutagen','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-mut','crop_mutagen','svg')">⬇ SVG</button></div>
+
+      <div class="ct" style="margin-top:18px">🏷️ Trait Categories</div>
+      <div class="chb" id="ce-trait"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-trait')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-trait','crop_trait','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-trait','crop_trait','svg')">⬇ SVG</button></div>
+
+      <div class="ct" style="margin-top:18px">🧫 Treated Explants</div>
+      <div class="chb" id="ce-exp"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-exp')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-exp','crop_explant','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-exp','crop_explant','svg')">⬇ SVG</button></div>
+
+      <div class="ct" style="margin-top:18px">🏛️ Top Institutions / Registration Agencies</div>
+      <div class="chb" id="ce-inst"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-inst')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-inst','crop_inst','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-inst','crop_inst','svg')">⬇ SVG</button></div>
+
+      <div class="ct" style="margin-top:18px">🔬 Explant × Trait Category (this crop)</div>
+      <div class="chb" id="ce-xt"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ce-xt')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ce-xt','crop_explant_trait','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ce-xt','crop_explant_trait','svg')">⬇ SVG</button></div>
+    </div>
+
+    <div class="pybox">
+      <div class="pyhead" onclick="togglePy(this)">
+        <span class="pytitle">🐍 Python equivalent — single-crop profile</span>
+        <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+        <span>▼</span>
+      </div>
+      <div class="pybody"><pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+df = pd.<span class="fn">read_csv</span>(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+
+<span class="cmt"># Pick one species (common OR Latin name)</span>
+q = <span class="fn">"rice"</span>
+mask = df[<span class="fn">"Crop"</span>].str.contains(q, case=<span class="kw">False</span>, na=<span class="kw">False</span>) \
+     | df[<span class="fn">"Species"</span>].str.contains(q, case=<span class="kw">False</span>, na=<span class="kw">False</span>)
+sub = df[mask]
+
+<span class="cmt"># Release timeline</span>
+sub[<span class="fn">"Year_of_Release"</span>].<span class="fn">value_counts</span>().<span class="fn">sort_index</span>().<span class="fn">plot</span>(kind=<span class="fn">"bar"</span>)
+
+<span class="cmt"># Country / mutagen / explant breakdowns</span>
+<span class="kw">for</span> col <span class="kw">in</span> [<span class="fn">"Country"</span>, <span class="fn">"Mutagen_Type"</span>, <span class="fn">"Treated_Explant"</span>]:
+    <span class="fn">print</span>(sub[col].<span class="fn">value_counts</span>().<span class="fn">head</span>(<span class="fn">10</span>))
+
+<span class="cmt"># Explant x Trait crosstab for this crop</span>
+pd.<span class="fn">crosstab</span>(sub[<span class="fn">"Treated_Explant"</span>], sub[<span class="fn">"Improved_Trait"</span>])</pre>
+        <div class="pylibs">
+          <span class="ln">pandas</span> <span class="ld">— filtering and value_counts for one species.</span><br>
+          <span class="ln">matplotlib</span> <span class="ld">— quick timeline / bar charts.</span><br>
+          <span class="ld">str.contains on both Crop and Species mirrors the botanical search box.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DESCRIPTIVE ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-desc">
+    <div class="doc">
+      <span class="dtag">FREQUENCY ANALYSIS</span><span class="dtag">DISTRIBUTION</span>
+      <strong>What it does:</strong> Counts how many mutant varieties exist for each category value, ranks them, and visualises the distribution. <em>The essential first step of any MVD analysis.</em>
+      <ul>
+        <li><strong>Column selector:</strong> Crop, Country, Region, Mutagen type, Crop Group, Decade, Explant type, or Institution</li>
+        <li><strong>Country + Region filters:</strong> restrict counts to a geographic subset before tallying — e.g. "top crops in Asia only"</li>
+        <li><strong>Chart types:</strong> Horizontal Bar (best for ranked lists), Vertical Bar, Donut/Pie (proportions), Treemap (hierarchical)</li>
+        <li><strong>Frequency table:</strong> count, %, cumulative % — copy-paste ready for publication methods sections</li>
+        <li><strong>Typical finding:</strong> Pareto pattern — top 3–5 categories account for 60–80% of all varieties</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Frequency &amp; Distribution Analysis</div>
+      <div class="cb">
+        <label>Column:</label>
+        <select id="d-col"><option value="Crop">Crop / Species</option><option value="Country">Country</option><option value="Region">Region</option><option value="Mutagen_Category">Mutagen Category</option><option value="Mutagen_Type">Mutagen Type (detail)</option><option value="Crop_Group">Crop Group</option><option value="Decade">Decade</option><option value="Treated_Explant">Explant Type</option><option value="Breeding_Institution">Institution</option></select>
+        <label>Top N:</label><input type="number" id="d-topn" value="20" style="width:60px">
+        <label>Chart:</label>
+        <select id="d-ctype"><option value="bar">Horizontal Bar</option><option value="pie">Donut / Pie</option><option value="barv">Vertical Bar</option><option value="treemap">Treemap</option></select>
+        <label>Country:</label>
+        <div class="sw"><input type="text" id="d-country" placeholder="All countries — type to filter…" style="width:115px" oninput="sugg(this,'d-cs','Country')" onblur="closeSugg('d-cs')"><div class="sl" id="d-cs"></div></div>
+        <label>Region:</label>
+        <select id="d-region" class="region-sel"><option value="">All regions</option></select>
+        <button class="btn bp" onclick="runDesc()">▶ Analyse</button>
+      </div>
+      <div class="two">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--iaea);margin-bottom:7px">FREQUENCY TABLE</div>
+          <div class="tw" id="d-tbl"></div>
+        </div>
+        <div>
+          <div class="chb" id="d-chart"></div>
+          <div class="dl-row"><button class="btn bs" onclick="resetView('d-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('d-chart','desc','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('d-chart','desc','svg')">⬇ SVG</button></div>
+        </div>
+      </div>
+      <div class="pybox">
+        <div class="pyhead" onclick="togglePy(this)">
+          <div class="pytitle">⌨ Python equivalent — Frequency Analysis</div>
+          <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+          <span style="color:#5C8A50;font-size:11px;margin-left:8px">▼</span>
+        </div>
+        <div class="pybody">
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+df = pd.read_csv(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+<span class="cmt"># Optional filters</span>
+<span class="cmt"># df = df[df["Country"].str.contains("Japan", case=False, na=False)]</span>
+<span class="cmt"># df = df[df["Region"] == "Asia"]</span>
+
+col, top_n = <span class="fn">"Crop"</span>, 20
+
+freq = df[col].value_counts().head(top_n).reset_index()
+freq.columns = [col, <span class="fn">"Count"</span>]
+freq[<span class="fn">"Pct"</span>]  = (freq[<span class="fn">"Count"</span>] / len(df) * 100).round(2)
+freq[<span class="fn">"Cum%"</span>] = freq[<span class="fn">"Pct"</span>].cumsum().round(2)
+print(freq.to_string(index=False))
+
+fig, ax = plt.subplots(figsize=(10, top_n * 0.38 + 2))
+ax.barh(freq[col][::-1], freq[<span class="fn">"Count"</span>][::-1], color=<span class="fn">"#005A8E"</span>)
+ax.set_xlabel(<span class="fn">"Varieties"</span>)
+ax.set_title(f<span class="fn">"{col} — Top {top_n}"</span>, fontweight=<span class="fn">"bold"</span>)
+ax.spines[[<span class="fn">"top"</span>, <span class="fn">"right"</span>]].set_visible(False)
+plt.tight_layout()
+plt.savefig(<span class="fn">"mvd_freq.png"</span>, dpi=150, bbox_inches=<span class="fn">"tight"</span>)
+plt.show()</pre>
+          <div class="pylibs">
+            <div><span class="ln">pandas</span> <span class="ld">— value_counts(), groupby(), filtering, crosstab; the core data manipulation library</span></div>
+            <div><span class="ln">matplotlib.pyplot</span> <span class="ld">— bar/horizontal bar/pie/donut charts; tight_layout, savefig for publication export</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TEMPORAL ══════════════════════════════════════════════ -->
+  <div class="panel" id="panel-temporal">
+    <div class="doc">
+      <span class="dtag">TIME SERIES</span><span class="dtag">TREND TEST</span>
+      <strong>What it does:</strong> Shows how the number of released mutant varieties has changed over time and tests whether the trend is statistically significant. <em>Key for understanding programme growth and technology adoption.</em>
+      <ul>
+        <li><strong>Annual / Decadal:</strong> bar charts per year or decade — peaks often correspond to major breeding investments or data submission batches</li>
+        <li><strong>Annual + Cumulative:</strong> dual-axis showing rate and total growth side by side</li>
+        <li><strong>Multi-Series:</strong> overlay categories on one time axis (e.g. Physical vs Chemical mutagen use over decades)</li>
+        <li><strong>Mann-Kendall test:</strong> non-parametric, no normality assumption — suited for count data. Returns Kendall's τ, p-value, and Sen's slope (varieties/year)</li>
+      </ul>
+      <strong>Note:</strong> Release year lags mutagenesis by 5–15 years — this reflects <em>release dynamics</em>, not when mutations were induced.
+    </div>
+    <div class="card">
+      <div class="ct">📅 Temporal Trend Analysis</div>
+      <div class="cb">
+        <label>Filter by:</label>
+        <select id="t-fcol"><option value="">All data</option><option value="Crop">Crop</option><option value="Country">Country</option><option value="Mutagen_Category">Mutagen Cat.</option><option value="Crop_Group">Crop Group</option><option value="Region">Region</option></select>
+        <label>Value:</label>
+        <div class="sw"><input type="text" id="t-fval" placeholder="e.g. rice" style="width:115px" oninput="suggForCol(this,'t-fs','t-fcol')" onblur="closeSugg('t-fs')"><div class="sl" id="t-fs"></div></div>
+        <label>Region:</label>
+        <select id="t-region" class="region-sel"><option value="">All regions</option></select>
+        <label>View:</label>
+        <select id="t-view"><option value="annual">Annual</option><option value="decade">Decadal</option><option value="both">Annual + Cumulative</option><option value="multi">Multi-Series</option></select>
+        <label>Multi-series by:</label>
+        <select id="t-mcol"><option value="Mutagen_Category">Mutagen Cat.</option><option value="Crop_Group">Crop Group</option><option value="Region">Region</option></select>
+        <button class="btn bp" onclick="runTemporal()">▶ Plot</button>
+        <button class="btn ba" onclick="runMK()">📉 Mann-Kendall</button>
+      </div>
+      <div class="chb" id="t-chart" style="min-height:420px"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('t-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('t-chart','temporal','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('t-chart','temporal','svg')">⬇ SVG</button></div>
+      <div id="mk-res" class="rb" style="display:none;margin-top:10px"></div>
+      <div class="pybox">
+        <div class="pyhead" onclick="togglePy(this)">
+          <div class="pytitle">⌨ Python equivalent — Temporal Analysis + Mann-Kendall</div>
+          <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+          <span style="color:#5C8A50;font-size:11px;margin-left:8px">▼</span>
+        </div>
+        <div class="pybody">
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> pymannkendall <span class="kw">as</span> mk  <span class="cmt"># pip install pymannkendall</span>
+
+df = pd.read_csv(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+df[<span class="fn">"Year_of_Release"</span>] = pd.to_numeric(df[<span class="fn">"Year_of_Release"</span>], errors=<span class="fn">"coerce"</span>)
+<span class="cmt"># df = df[df["Crop"].str.contains("rice", case=False, na=False)]</span>
+
+annual  = df.groupby(<span class="fn">"Year_of_Release"</span>).size().reset_index(name=<span class="fn">"Count"</span>)
+annual[<span class="fn">"Cumulative"</span>] = annual[<span class="fn">"Count"</span>].cumsum()
+df[<span class="fn">"Decade"</span>] = (df[<span class="fn">"Year_of_Release"</span>] // 10 * 10).astype(<span class="fn">"Int64"</span>)
+decadal = df.groupby(<span class="fn">"Decade"</span>).size().reset_index(name=<span class="fn">"Count"</span>)
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+axes[0].bar(annual[<span class="fn">"Year_of_Release"</span>], annual[<span class="fn">"Count"</span>], color=<span class="fn">"#005A8E"</span>, width=0.9)
+axes[0].set_title(<span class="fn">"Annual Releases"</span>, fontweight=<span class="fn">"bold"</span>)
+axes[1].bar(decadal[<span class="fn">"Decade"</span>], decadal[<span class="fn">"Count"</span>], color=<span class="fn">"#00A19A"</span>, width=8)
+axes[1].set_title(<span class="fn">"Decadal Distribution"</span>, fontweight=<span class="fn">"bold"</span>)
+axes[2].plot(annual[<span class="fn">"Year_of_Release"</span>], annual[<span class="fn">"Cumulative"</span>], color=<span class="fn">"#E07B00"</span>, lw=2)
+axes[2].set_title(<span class="fn">"Cumulative Growth"</span>, fontweight=<span class="fn">"bold"</span>)
+for ax in axes: ax.spines[[<span class="fn">"top"</span>, <span class="fn">"right"</span>]].set_visible(False)
+plt.tight_layout(); plt.savefig(<span class="fn">"mvd_temporal.png"</span>, dpi=150); plt.show()
+
+result = mk.original_test(annual[<span class="fn">"Count"</span>].values)
+print(f<span class="fn">"Trend   : {result.trend}"</span>)
+print(f<span class="fn">"p-value : {result.p:.6f}"</span>)
+print(f<span class="fn">"tau     : {result.Tau:.4f}"</span>)
+print(f<span class="fn">"slope   : {result.slope:.3f} varieties/year"</span>)</pre>
+          <div class="pylibs">
+            <div><span class="ln">pandas</span> <span class="ld">— groupby(year/decade), cumsum() for running totals, to_numeric() for type conversion</span></div>
+            <div><span class="ln">matplotlib.pyplot</span> <span class="ld">— bar, line and dual-axis (twinx) charts; multi-panel subplots</span></div>
+            <div><span class="ln">pymannkendall</span> <span class="ld">— Non-parametric monotonic trend test. Returns trend direction, Kendall's τ, p-value, Sen's slope. No normality assumption — ideal for count data</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ COMPARE ═══════════════════════════════════════════════ -->
+  <div class="panel" id="panel-compare">
+    <div class="doc">
+      <span class="dtag">CROSS-TABULATION</span><span class="dtag">HEATMAP</span>
+      <strong>What it does:</strong> Cross-tabulates two categorical variables and visualises the joint distribution. <em>Reveals dominant, rare, and absent combinations — the most information-dense view of the MVD.</em>
+      <ul>
+        <li><strong>Heatmap:</strong> colour-coded count matrix — immediately shows e.g. Japan dominates Rice × Gamma rays, or EMS is nearly exclusive to Europe</li>
+        <li><strong>Stacked Bar (%):</strong> normalised to 100% — compare composition regardless of absolute programme size</li>
+        <li><strong>Grouped Bar:</strong> side-by-side absolute counts — use when raw programme size matters</li>
+        <li><strong>Bubble Grid:</strong> every row × column combination as a sized, colour-coded bubble — the most readable way to spot dominant and rare pairings at a glance</li>
+        <li><strong>Table:</strong> raw cross-tabulation with row totals for export</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🌍 Cross-Tabulation &amp; Comparative Analysis</div>
+      <div class="cb">
+        <label>Row (Y):</label>
+        <select id="c-row"><option value="Country">Country</option><option value="Region">Region</option><option value="Crop">Crop</option><option value="Mutagen_Category">Mutagen Cat.</option><option value="Crop_Group">Crop Group</option><option value="Decade">Decade</option></select>
+        <label>Column (X):</label>
+        <select id="c-col"><option value="Crop_Group">Crop Group</option><option value="Mutagen_Category">Mutagen Cat.</option><option value="Region">Region</option><option value="Decade">Decade</option><option value="Country">Country</option><option value="Crop">Crop</option></select>
+        <label>Top rows:</label><input type="number" id="c-nr" value="12" style="width:52px">
+        <label>Top cols:</label><input type="number" id="c-nc" value="8" style="width:52px">
+        <label>Region:</label>
+        <select id="c-reg" class="region-sel"><option value="">All regions</option></select>
+      </div>
+      <div class="btn-row">
+        <button class="btn bp" onclick="runHeat()">🔥 Heatmap</button>
+        <button class="btn ba" onclick="runStack()">📊 Stacked Bar (%)</button>
+        <button class="btn bam" onclick="runGroup()">📊 Grouped Bar</button>
+        <button class="btn bpu" onclick="runBubble()">🫧 Bubble Grid</button>
+        <button class="btn bo" onclick="showCT()">🗂 Table</button>
+      </div>
+      <div class="chb" id="c-chart" style="min-height:420px"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('c-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('c-chart','compare','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('c-chart','compare','svg')">⬇ SVG</button></div>
+      <div class="tw" id="c-tbl" style="display:none;margin-top:12px"></div>
+      <div class="pybox">
+        <div class="pyhead" onclick="togglePy(this)">
+          <div class="pytitle">⌨ Python equivalent — Cross-tabulation &amp; Heatmap</div>
+          <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+          <span style="color:#5C8A50;font-size:11px;margin-left:8px">▼</span>
+        </div>
+        <div class="pybody">
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+df = pd.read_csv(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+<span class="cmt"># df = df[df["Region"] == "Asia"]</span>
+
+row_col, col_col = <span class="fn">"Country"</span>, <span class="fn">"Crop_Group"</span>
+tr, tc = 12, 8
+top_r = df[row_col].value_counts().head(tr).index
+top_c = df[col_col].value_counts().head(tc).index
+sub = df[df[row_col].isin(top_r) &amp; df[col_col].isin(top_c)]
+ct = pd.crosstab(sub[row_col], sub[col_col])
+
+fig, ax = plt.subplots(figsize=(max(10, tc), max(6, tr * 0.45)))
+sns.heatmap(ct, ax=ax, annot=True, fmt=<span class="fn">"d"</span>, cmap=<span class="fn">"Blues"</span>,
+            linewidths=0.3, annot_kws={<span class="fn">"size"</span>: 9})
+ax.set_title(f<span class="fn">"{row_col} x {col_col}"</span>, fontweight=<span class="fn">"bold"</span>)
+plt.tight_layout(); plt.savefig(<span class="fn">"mvd_heatmap.png"</span>, dpi=150); plt.show()
+
+<span class="cmt"># Stacked % composition</span>
+ct_pct = ct.div(ct.sum(axis=1), axis=0) * 100
+ct_pct.plot(kind=<span class="fn">"bar"</span>, stacked=True, figsize=(12, 6), colormap=<span class="fn">"tab10"</span>)
+plt.xticks(rotation=45, ha=<span class="fn">"right"</span>); plt.ylabel(<span class="fn">"Percentage (%)"</span>)
+plt.tight_layout(); plt.savefig(<span class="fn">"mvd_stacked.png"</span>, dpi=150)</pre>
+          <div class="pylibs">
+            <div><span class="ln">pandas.crosstab</span> <span class="ld">— Builds contingency table from two categorical columns; .div() normalises to %</span></div>
+            <div><span class="ln">seaborn.heatmap</span> <span class="ld">— Colour-coded matrix with cell annotations; built on matplotlib for styling</span></div>
+            <div><span class="ln">matplotlib.pyplot</span> <span class="ld">— Stacked/grouped bar charts, multi-subplot layout, figure export</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MUTAGEN ═══════════════════════════════════════════════ -->
+  <div class="panel" id="panel-mutagen">
+    <div class="doc">
+      <span class="dtag">MUTAGEN</span><span class="dtag">TECHNOLOGY SHIFT</span>
+      <strong>What it does:</strong> Analyses which mutagenic agents have been used and how mutagenesis technology has evolved. <em>Documents the shift from radiation-dominated early breeding toward chemical and ion-beam methods.</em>
+      <ul>
+        <li><strong>Distribution:</strong> Physical (gamma, X-ray, neutron, ion beam) vs Chemical (EMS, sodium azide…) proportions</li>
+        <li><strong>Decadal Shift:</strong> gamma rays were near-exclusive before 1980; EMS and ion beams gained ground from 1990s onward</li>
+        <li><strong>Crop × Mutagen Heatmap:</strong> distinct profiles per crop — rice favours gamma, barley leans to sodium azide, woody species use ion beams</li>
+        <li><strong>Country × Mutagen:</strong> Japan's RIKEN ion-beam programme stands out; European programmes show strong EMS adoption</li>
+        <li><strong>Dose Distribution:</strong> histogram of recorded doses (Gy for radiation, mM for chemicals) — data quality check</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🧬 Mutagen Analysis</div>
+      <div class="cb">
+        <label>Crop:</label>
+        <div class="sw"><input type="text" id="m-crop" placeholder="e.g. rice" style="width:110px" oninput="sugg(this,'m-cs','Crop')" onblur="closeSugg('m-cs')"><div class="sl" id="m-cs"></div></div>
+        <label>Country:</label>
+        <div class="sw"><input type="text" id="m-co" placeholder="All countries — type to filter…" style="width:110px" oninput="sugg(this,'m-cos','Country')" onblur="closeSugg('m-cos')"><div class="sl" id="m-cos"></div></div>
+        <label>Region:</label>
+        <select id="m-reg" class="region-sel"><option value="">All regions</option></select>
+        <label>Year:</label>
+        <input type="number" id="m-y1" value="1950" style="width:68px"> –
+        <input type="number" id="m-y2" value="2024" style="width:68px">
+      </div>
+      <div class="btn-row">
+        <button class="btn bp" onclick="mDonut()">🍩 Distribution</button>
+        <button class="btn ba" onclick="mDecade()">📈 Decadal Shift</button>
+        <button class="btn bam" onclick="mCropHeat()">🔥 Crop × Mutagen</button>
+        <button class="btn bpu" onclick="mCountry()">🌍 Country Compare</button>
+        <button class="btn bo" onclick="mDose()">📊 Dose Histogram</button>
+      </div>
+      <div class="chb" id="m-chart" style="min-height:420px"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('m-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('m-chart','mutagen','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('m-chart','mutagen','svg')">⬇ SVG</button></div>
+      <div class="pybox">
+        <div class="pyhead" onclick="togglePy(this)">
+          <div class="pytitle">⌨ Python equivalent — Mutagen Analysis</div>
+          <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+          <span style="color:#5C8A50;font-size:11px;margin-left:8px">▼</span>
+        </div>
+        <div class="pybody">
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+df = pd.read_csv(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+
+<span class="kw">def</span> cat_mut(x):
+    <span class="kw">if</span> pd.isna(x): <span class="kw">return</span> <span class="fn">"Unknown"</span>
+    x = str(x).lower()
+    <span class="kw">if</span> any(k <span class="kw">in</span> x <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"gamma"</span>,<span class="fn">"x-ray"</span>,<span class="fn">"neutron"</span>,<span class="fn">"ion beam"</span>,<span class="fn">"carbon"</span>]): <span class="kw">return</span> <span class="fn">"Physical"</span>
+    <span class="kw">if</span> any(k <span class="kw">in</span> x <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"ems"</span>,<span class="fn">"sodium azide"</span>,<span class="fn">"colchicine"</span>]):              <span class="kw">return</span> <span class="fn">"Chemical"</span>
+    <span class="kw">return</span> <span class="fn">"Other"</span>
+df[<span class="fn">"Mutagen_Category"</span>] = df[<span class="fn">"Mutagen_Type"</span>].apply(cat_mut)
+
+<span class="cmt"># Donut chart</span>
+cats = df[<span class="fn">"Mutagen_Category"</span>].value_counts()
+fig, ax = plt.subplots(figsize=(7, 6))
+ax.pie(cats, labels=cats.index, autopct=<span class="fn">"%1.1f%%"</span>,
+       wedgeprops=dict(width=0.55), startangle=90)
+ax.set_title(<span class="fn">"Mutagen Distribution"</span>); plt.savefig(<span class="fn">"mvd_donut.png"</span>, dpi=150)
+
+<span class="cmt"># Decadal shift</span>
+df[<span class="fn">"Decade"</span>] = (df[<span class="fn">"Year_of_Release"</span>] // 10 * 10).astype(<span class="fn">"Int64"</span>)
+ct = pd.crosstab(df[<span class="fn">"Decade"</span>], df[<span class="fn">"Mutagen_Category"</span>])
+ct.plot(kind=<span class="fn">"bar"</span>, stacked=True, figsize=(11, 5))
+plt.xticks(rotation=45, ha=<span class="fn">"right"</span>); plt.tight_layout()
+plt.savefig(<span class="fn">"mvd_mutagen_decade.png"</span>, dpi=150)
+
+<span class="cmt"># Crop x Mutagen heatmap</span>
+top_crops = df[<span class="fn">"Crop"</span>].value_counts().head(18).index
+sub = df[df[<span class="fn">"Crop"</span>].isin(top_crops)]
+ct2 = pd.crosstab(sub[<span class="fn">"Crop"</span>], sub[<span class="fn">"Mutagen_Category"</span>])
+sns.heatmap(ct2, annot=True, fmt=<span class="fn">"d"</span>, cmap=<span class="fn">"YlOrRd"</span>, figsize=(9, 10))
+plt.tight_layout(); plt.savefig(<span class="fn">"mvd_crop_mutagen.png"</span>, dpi=150)</pre>
+          <div class="pylibs">
+            <div><span class="ln">pandas.apply</span> <span class="ld">— Row-wise categorisation function; str.contains() for keyword matching</span></div>
+            <div><span class="ln">matplotlib.pyplot</span> <span class="ld">— Pie/donut (wedgeprops for hole), stacked bar; axis-level and figure-level customisation</span></div>
+            <div><span class="ln">seaborn.heatmap</span> <span class="ld">— Statistical heatmap with auto colour scaling and cell-level annotation (annot=True, fmt="d")</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TRAIT ═════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-trait">
+    <div class="doc">
+      <span class="dtag">TRAIT</span><span class="dtag">BREEDING TARGET</span>
+      <strong>What it does:</strong> Analyses which agronomic characteristics mutation breeding has targeted, and how priorities have shifted. <em>Reveals global and regional breeding focus in response to food security and climate pressures.</em>
+      <ul>
+        <li><strong>Top Traits:</strong> raw frequency after splitting multi-trait entries. Older records use free text; newer records use controlled vocabulary — some normalisation may be needed for strict comparisons</li>
+        <li><strong>Category Distribution:</strong> 7 categories — Yield · Disease Resistance · Abiotic Stress · Maturity · Quality · Plant Architecture · Pest Resistance</li>
+        <li><strong>Crop × Trait Heatmap:</strong> cereals concentrate on yield/architecture; oilseeds on quality/oil content; vegetables on disease resistance</li>
+        <li><strong>Decade Shift:</strong> Abiotic Stress and Quality categories have grown post-2000 as climate and nutritional demands increased</li>
+      </ul>
+      <strong>Note:</strong> Multi-trait varieties contribute to multiple category counts — percentages sum above 100%.
+    </div>
+    <div class="card">
+      <div class="ct">🏷️ Trait (Improved Characteristic) Analysis</div>
+      <div class="cb">
+        <label>Crop:</label>
+        <div class="sw"><input type="text" id="tr-crop" placeholder="e.g. wheat" style="width:110px" oninput="sugg(this,'tr-cs','Crop')" onblur="closeSugg('tr-cs')"><div class="sl" id="tr-cs"></div></div>
+        <label>Country:</label>
+        <div class="sw"><input type="text" id="tr-co" placeholder="All countries — type to filter…" style="width:110px" oninput="sugg(this,'tr-cos','Country')" onblur="closeSugg('tr-cos')"><div class="sl" id="tr-cos"></div></div>
+        <label>Crop Group:</label>
+        <select id="tr-cg"><option value="">All groups</option><option>Cereals</option><option>Legumes</option><option>Oilseeds</option><option>Fibre</option><option>Vegetables</option><option>Fruits</option><option>Ornamentals</option><option>Industrial/Other crops</option></select>
+        <label>Region:</label>
+        <select id="tr-reg" class="region-sel"><option value="">All regions</option></select>
+        <label>Top N:</label><input type="number" id="tr-n" value="20" style="width:52px">
+      </div>
+      <div class="btn-row">
+        <button class="btn bp" onclick="trFreq()">📊 Top Traits</button>
+        <button class="btn ba" onclick="trCat()">🍩 Categories</button>
+        <button class="btn bam" onclick="trHeat()">🔥 Crop × Trait</button>
+        <button class="btn bpu" onclick="trDecade()">📅 Decade Shift</button>
+        <button class="btn bo" onclick="trDevel()">🧬 Development × Trait</button>
+      </div>
+      <div class="two">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--iaea);margin-bottom:7px">TRAIT FREQUENCY</div>
+          <div class="tw" id="tr-tbl"></div>
+        </div>
+        <div>
+          <div class="chb" id="tr-chart"></div>
+          <div class="dl-row"><button class="btn bs" onclick="resetView('tr-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('tr-chart','trait','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('tr-chart','trait','svg')">⬇ SVG</button></div>
+        </div>
+      </div>
+      <div class="pybox">
+        <div class="pyhead" onclick="togglePy(this)">
+          <div class="pytitle">⌨ Python equivalent — Trait Analysis</div>
+          <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+          <span style="color:#5C8A50;font-size:11px;margin-left:8px">▼</span>
+        </div>
+        <div class="pybody">
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+df = pd.read_csv(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+<span class="cmt"># df = df[df["Crop"].str.contains("wheat", case=False, na=False)]</span>
+
+<span class="cmt"># Split multi-trait cells and count</span>
+all_traits = (df[<span class="fn">"Improved_Trait"</span>].dropna()
+              .str.split(r<span class="fn">"[,;/&+]+"</span>, expand=True).stack()
+              .str.strip().str.lower())
+all_traits = all_traits[all_traits.str.len() &gt; 2]
+top20 = all_traits.value_counts().head(20)
+print(top20)
+
+<span class="cmt"># Categorise</span>
+<span class="kw">def</span> cat(t):
+    t = str(t).lower()
+    <span class="kw">if</span> any(k <span class="kw">in</span> t <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"yield"</span>,<span class="fn">"grain"</span>]):               <span class="kw">return</span> <span class="fn">"Yield"</span>
+    <span class="kw">if</span> any(k <span class="kw">in</span> t <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"disease"</span>,<span class="fn">"resist"</span>,<span class="fn">"blight"</span>]):   <span class="kw">return</span> <span class="fn">"Disease Resist."</span>
+    <span class="kw">if</span> any(k <span class="kw">in</span> t <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"drought"</span>,<span class="fn">"salinity"</span>,<span class="fn">"stress"</span>]): <span class="kw">return</span> <span class="fn">"Abiotic Stress"</span>
+    <span class="kw">if</span> any(k <span class="kw">in</span> t <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"matur"</span>,<span class="fn">"early"</span>]):              <span class="kw">return</span> <span class="fn">"Maturity"</span>
+    <span class="kw">if</span> any(k <span class="kw">in</span> t <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"quality"</span>,<span class="fn">"protein"</span>,<span class="fn">"oil"</span>]):    <span class="kw">return</span> <span class="fn">"Quality"</span>
+    <span class="kw">if</span> any(k <span class="kw">in</span> t <span class="kw">for</span> k <span class="kw">in</span> [<span class="fn">"lodg"</span>,<span class="fn">"dwarf"</span>,<span class="fn">"height"</span>]):     <span class="kw">return</span> <span class="fn">"Plant Arch."</span>
+    <span class="kw">return</span> <span class="fn">"Other"</span>
+all_traits.apply(cat).value_counts().plot(kind=<span class="fn">"pie"</span>, autopct=<span class="fn">"%1.1f%%"</span>,
+    wedgeprops=dict(width=0.55), figsize=(7, 6))
+plt.title(<span class="fn">"Trait Category Distribution"</span>)
+plt.savefig(<span class="fn">"mvd_trait_cat.png"</span>, dpi=150); plt.show()
+
+<span class="cmt"># Crop x Trait heatmap</span>
+df[<span class="fn">"Trait_Cat"</span>] = df[<span class="fn">"Improved_Trait"</span>].apply(cat)
+top_c = df[<span class="fn">"Crop"</span>].value_counts().head(15).index
+ct = pd.crosstab(df[df[<span class="fn">"Crop"</span>].isin(top_c)][<span class="fn">"Crop"</span>],
+                 df[df[<span class="fn">"Crop"</span>].isin(top_c)][<span class="fn">"Trait_Cat"</span>])
+sns.heatmap(ct, annot=True, fmt=<span class="fn">"d"</span>, cmap=<span class="fn">"Blues"</span>, figsize=(12, 8))
+plt.tight_layout(); plt.savefig(<span class="fn">"mvd_crop_trait.png"</span>, dpi=150)</pre>
+          <div class="pylibs">
+            <div><span class="ln">pandas str.split + stack</span> <span class="ld">— Explodes multi-value cells (e.g. "Yield; Disease resistance") into individual rows for counting</span></div>
+            <div><span class="ln">pandas.apply</span> <span class="ld">— Row-wise trait categorisation using keyword lists</span></div>
+            <div><span class="ln">seaborn.heatmap</span> <span class="ld">— Crop × trait-category matrix with count annotations</span></div>
+            <div><span class="ln">matplotlib.pyplot</span> <span class="ld">— Pie/donut chart, stacked bar, horizontal bar export</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══ EXPLANT × TRAIT ════════════════════════════════════════ -->
+  <div class="panel" id="panel-explant">
+    <div class="doc">
+      <span class="dtag">TISSUE → OUTCOME</span><span class="dtag">CHI-SQUARE</span>
+      <strong>What it does:</strong> Cross-tabulates the treated explant (seed, callus, pollen, cutting, bulb…) against the resulting trait category. <em>Tests whether the choice of starting tissue is statistically linked to the kind of improvement obtained.</em>
+      <ul>
+        <li><strong>Count heatmap:</strong> raw varieties per Explant × Trait Category combination</li>
+        <li><strong>Row-normalised %:</strong> within each explant, what share of varieties target each trait — removes the dominance of common explants like seed</li>
+        <li><strong>Chi-Square test:</strong> are explant and trait independent? Low p ⇒ tissue choice and breeding outcome are associated</li>
+        <li><strong>Filters:</strong> narrow to a crop / species / region before testing</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🧫 Explant × Trait Category</div>
+      <div class="cb">
+        <label>Crop / Species:</label>
+        <div class="sw"><input type="text" id="ex-crop" placeholder="e.g. Rice, Oryza" style="width:140px" oninput="exCropSugg(this)" onblur="closeSugg('ex-crop-sl')"><div class="sl" id="ex-crop-sl"></div></div>
+        <label>Country:</label>
+        <div class="sw"><input type="text" id="ex-co" placeholder="All countries — type to filter…" style="width:115px" oninput="sugg(this,'ex-co-sl','Country')" onblur="closeSugg('ex-co-sl')"><div class="sl" id="ex-co-sl"></div></div>
+        <label>Region:</label>
+        <select id="ex-reg" class="region-sel"><option value="">All regions</option></select>
+        <label>Top explants:</label><input type="number" id="ex-n" value="8" style="width:55px">
+      </div>
+      <div class="btn-row">
+        <button class="btn bp" onclick="exHeat()">🔥 Count Heatmap</button>
+        <button class="btn ba" onclick="exNorm()">📊 Row-Normalised %</button>
+        <button class="btn bam" onclick="exChi()">🧮 Chi-Square Test</button>
+        <button class="btn bo" onclick="exTbl()">🗂 Table</button>
+      </div>
+      <div class="chb" id="ex-chart"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('ex-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ex-chart','explant_trait','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('ex-chart','explant_trait','svg')">⬇ SVG</button></div>
+      <div class="rb" id="ex-res" style="display:none"></div>
+      <div class="tw" id="ex-tbl" style="display:none;margin-top:10px"></div>
+    </div>
+    <div class="pybox">
+      <div class="pyhead" onclick="togglePy(this)">
+        <span class="pytitle">🐍 Python equivalent — Explant × Trait + Chi-Square</span>
+        <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+        <span>▼</span>
+      </div>
+      <div class="pybody"><pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> chi2_contingency
+
+df = pd.<span class="fn">read_csv</span>(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+
+<span class="cmt"># Optional filter (crop / region) goes here</span>
+ct = pd.<span class="fn">crosstab</span>(df[<span class="fn">"Treated_Explant"</span>], df[<span class="fn">"Improved_Trait"</span>])
+
+<span class="cmt"># Row-normalised percentages</span>
+ct_pct = ct.<span class="fn">div</span>(ct.<span class="fn">sum</span>(axis=<span class="fn">1</span>), axis=<span class="fn">0</span>) * <span class="fn">100</span>
+sns.<span class="fn">heatmap</span>(ct_pct, annot=<span class="kw">True</span>, fmt=<span class="fn">".0f"</span>, cmap=<span class="fn">"viridis"</span>)
+
+<span class="cmt"># Chi-Square test of independence</span>
+chi2, p, dof, expected = <span class="fn">chi2_contingency</span>(ct)
+<span class="fn">print</span>(<span class="fn">f"chi2={chi2:.2f}  p={p:.4f}  dof={dof}"</span>)</pre>
+        <div class="pylibs">
+          <span class="ln">pandas.crosstab</span> <span class="ld">— builds the Explant × Trait contingency table.</span><br>
+          <span class="ln">scipy.stats.chi2_contingency</span> <span class="ld">— χ², p-value, degrees of freedom, expected counts.</span><br>
+          <span class="ln">seaborn</span> <span class="ld">— annotated heatmap of the normalised table.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADVANCED ═══════════════════════════════════════════════ -->
+  <div class="panel" id="panel-advanced">
+    <div class="doc">
+      <span class="dtag">INFERENTIAL</span><span class="dtag">NON-PARAMETRIC</span>
+      <strong>What it does:</strong> Formal hypothesis testing on MVD data — moves beyond counts to answerable statistical questions with p-values and effect sizes.
+      <ul>
+        <li><strong>Chi-Square (χ²) Test:</strong> "Are two categorical variables statistically associated?" e.g. Is mutagen choice independent of crop group? Reports χ² statistic, df, p-value. Warning shown when expected cells &lt;5 (merge rare categories)</li>
+        <li><strong>Mann-Kendall (Detailed):</strong> filterable, year-bounded. Returns Kendall's τ, p-value, Sen's slope, and a dual-axis trend chart with slope line</li>
+        <li><strong>Descriptive Stats (shown first):</strong> a plain-language summary and histogram for Year of Release, or for <strong>Mutagen Dose recovered from text</strong> (≈half the records, mostly Gy) — the single most useful enriched field for planning a treatment</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🔢 Descriptive Statistics — Numeric Columns</div>
+      <div class="doc" style="margin:0 0 12px">
+        <span class="dtag">DOSE FROM TEXT</span>
+        The MVD export has no dedicated dose column. Where a dose appears in a variety's description (e.g. <em>"gamma rays (200 Gy)"</em>), the suite extracts it into <strong>Mutagen Dose</strong> — recovered for roughly <strong>half</strong> of all records, almost always in <strong>Gy</strong>. Treat it as an indicative distribution of reported doses, not a complete census. Year of Release is fully numeric.
+      </div>
+      <div class="cb">
+        <label>Column:</label>
+        <select id="ns-col"><option value="Year_of_Release">Year of Release</option><option value="Mutagen_Dose">Mutagen Dose (Gy, from text)</option></select>
+        <label>Crop:</label>
+        <div class="sw"><input type="text" id="ns-crop" placeholder="optional" style="width:110px" oninput="sugg(this,'ns-cs','Crop')" onblur="closeSugg('ns-cs')"><div class="sl" id="ns-cs"></div></div>
+        <label>Region:</label>
+        <select id="ns-reg" class="region-sel"><option value="">All regions</option></select>
+        <button class="btn bp" onclick="runNS()">▶ Summary</button>
+        <button class="btn ba" onclick="runHist()">📊 Histogram</button>
+      </div>
+      <div class="two">
+        <div class="tw" id="ns-tbl"></div>
+        <div>
+          <div class="chb" id="ns-chart"></div>
+          <div class="dl-row"><button class="btn bs" onclick="resetView('ns-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('ns-chart','stats','png')">⬇ PNG</button></div>
+        </div>
+      </div>
+    </div>
+
+<div class="card">
+      <div class="ct">χ² Chi-Square Independence Test</div>
+      <div class="cb">
+        <label>Variable 1:</label>
+        <select id="chi1"><option value="Mutagen_Category">Mutagen Category</option><option value="Crop_Group">Crop Group</option><option value="Region">Region</option><option value="Decade">Decade</option></select>
+        <label>Variable 2:</label>
+        <select id="chi2"><option value="Crop_Group">Crop Group</option><option value="Mutagen_Category">Mutagen Cat.</option><option value="Region">Region</option><option value="Decade">Decade</option></select>
+        <label>Top N:</label><input type="number" id="chi-n" value="10" style="width:52px">
+        <button class="btn bp" onclick="runChi()">▶ Run Test</button>
+      </div>
+      <div id="chi-res" class="rb">Chi-Square results will appear here…</div>
+      <div class="chb" id="chi-chart" style="min-height:300px;margin-top:10px"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('chi-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('chi-chart','chi2','png')">⬇ PNG</button></div>
+      <div class="pybox">
+        <div class="pyhead" onclick="togglePy(this)">
+          <div class="pytitle">⌨ Python equivalent — Chi-Square Test</div>
+          <button class="pytbtn" onclick="copyPy(event,this)">Copy</button>
+          <span style="color:#5C8A50;font-size:11px;margin-left:8px">▼</span>
+        </div>
+        <div class="pybody">
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> chi2_contingency
+
+df = pd.read_csv(<span class="fn">"MVD_DB.csv"</span>, encoding=<span class="fn">"utf-8-sig"</span>)
+v1, v2, top_n = <span class="fn">"Mutagen_Category"</span>, <span class="fn">"Crop_Group"</span>, 10
+
+t1 = df[v1].value_counts().head(top_n).index
+t2 = df[v2].value_counts().head(top_n).index
+sub = df[df[v1].isin(t1) &amp; df[v2].isin(t2)]
+ct = pd.crosstab(sub[v1], sub[v2])
+
+chi2, p, dof, expected = chi2_contingency(ct)
+print(f<span class="fn">"chi2 = {chi2:.4f}   df = {dof}   p = {p:.6f}"</span>)
+print(<span class="fn">"SIGNIFICANT"</span> <span class="kw">if</span> p &lt; 0.05 <span class="kw">else</span> <span class="fn">"NOT significant"</span>)
+<span class="kw">if</span> expected.min() &lt; 5:
+    print(<span class="fn">"Warning: min expected cell < 5 — merge rare categories"</span>)</pre>
+          <div class="pylibs">
+            <div><span class="ln">scipy.stats.chi2_contingency</span> <span class="ld">— Computes χ² statistic, p-value, degrees of freedom, and expected cell counts from a 2D contingency table</span></div>
+            <div><span class="ln">pandas.crosstab</span> <span class="ld">— Builds the input contingency table from two categorical columns</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">📉 Mann-Kendall Trend Test (Detailed)</div>
+      <div class="cb">
+        <label>Filter by:</label>
+        <select id="mk2-col"><option value="">No filter</option><option value="Crop">Crop</option><option value="Country">Country</option><option value="Region">Region</option><option value="Mutagen_Category">Mutagen</option><option value="Crop_Group">Crop Group</option></select>
+        <label>Value:</label>
+        <div class="sw"><input type="text" id="mk2-val" placeholder="e.g. rice" style="width:115px" oninput="suggForCol(this,'mk2-s','mk2-col')" onblur="closeSugg('mk2-s')"><div class="sl" id="mk2-s"></div></div>
+        <label>Year from:</label><input type="number" id="mk2-y1" value="1960" style="width:68px">
+        <label>to:</label><input type="number" id="mk2-y2" value="2024" style="width:68px">
+        <button class="btn bp" onclick="runMK2()">▶ Run Test</button>
+      </div>
+      <div id="mk2-res" class="rb">Mann-Kendall results will appear here…</div>
+      <div class="chb" id="mk2-chart" style="min-height:300px;margin-top:10px"></div>
+      <div class="dl-row"><button class="btn bs" onclick="resetView('mk2-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('mk2-chart','mk','png')">⬇ PNG</button></div>
+    </div>
+  </div>
+<!-- ═══ EXPORT ════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-export">
+    <div class="doc">
+      <span class="dtag">EXPORT</span>
+      <strong>What it does:</strong> Extracts results from the browser for publications and presentations.
+      <ul>
+        <li><strong>Complete ZIP bundle:</strong> one click packages the filtered/processed CSV, the summary report, and a PNG of every chart you've generated this session — ready to archive or share</li>
+        <li><strong>Processed CSV:</strong> full dataset enriched with derived columns (Region, Mutagen_Category, Crop_Group, Decade) — ready for further analysis in Python, R or Excel</li>
+        <li><strong>Summary Report:</strong> auto-generated plain-text — top crops, countries, regions, decadal distribution, top traits — paste-ready for a methods/results section</li>
+        <li><strong>Chart downloads:</strong> every chart has ⬇ PNG (2× scale ≈ 300 dpi) and ⬇ SVG (vector, infinitely scalable) buttons — use SVG for journal figures</li>
+      </ul>
+      <strong>Citation:</strong> IAEA Mutant Variety Database. Retrieved [date], from https://mvd.iaea.org
+    </div>
+    <div class="card">
+      <div class="ct">💾 Export &amp; Report</div>
+      <div class="btn-row">
+        <button class="btn bp" onclick="exportZip()">🗜️ Download Everything (ZIP)</button>
+        <button class="btn ba" onclick="expCSV()">📥 Processed CSV</button>
+        <button class="btn bam" onclick="genRep()">📋 Generate Summary Report</button>
+        <button class="btn bo" onclick="saveRep()">💾 Save Report (.txt)</button>
+      </div>
+      <div id="zip-status" style="font-size:12px;color:var(--muted);margin:4px 0 8px"></div>
+      <div id="rep-box" class="rb" style="max-height:520px;font-size:12px">Click "Generate Summary Report"…</div>
+    </div>
+  </div>
+
+  </div>
+  <div id="sbar"><span id="stxt">MVD Analysis Suite · Data: IAEA Mutant Variety Database (mvd.iaea.org)</span></div>
+</div>
+<script>
+"use strict";
+const G={rows:[],cols:[]};
+const MODS=[
+  {id:"crop",icon:"🌿",title:"Crop Explorer",desc:"Pick a single species and get a one-page dashboard: release timeline, country spread, mutagens, trait categories, explants, institutions, and that crop's Explant × Trait map.",tags:["Single species","Dashboard","Botanical search"]},
+  {id:"desc",icon:"📊",title:"Dataset Overview",desc:"Frequency tables and charts for any column — crop, country, decade, mutagen type. Programme strength and last-decade vs previous-decade momentum.",tags:["Frequency","Momentum","Region filter"]},
+  {id:"temporal",icon:"📅",title:"Temporal Analysis",desc:"Annual and decadal release trends, cumulative growth, multi-series comparison. Mann-Kendall significance test with Sen's slope.",tags:["Time series","Mann-Kendall","Sen's slope"]},
+  {id:"compare",icon:"🌍",title:"Cross-Table & Compare",desc:"Cross-tabulate any two categorical variables: heatmap, stacked %, grouped bar, bubble grid. Reveals which combinations dominate or are absent.",tags:["Heatmap","Cross-tab","Bubble"]},
+  {id:"mutagen",icon:"🧬",title:"Mutagen Analysis",desc:"Physical vs Chemical distribution, decadal technology shift, Crop × Mutagen and Country × Mutagen heatmaps, dose histogram.",tags:["Physical/Chemical","Ion beam","Dose"]},
+  {id:"trait",icon:"🏷️",title:"Trait Analysis",desc:"Top improved traits, 7-category distribution, Crop × Trait heatmap, decade shift (Abiotic Stress rising post-2000), region comparison.",tags:["Breeding target","Category","Decade shift"]},
+  {id:"explant",icon:"🧫",title:"Explant × Trait",desc:"Which tissue type (seed, callus, pollen…) yields which breeding outcome. Count + row-normalised % heatmaps and a Chi-Square independence test.",tags:["Explant","Normalised %","Chi-Square"]},
+  {id:"advanced",icon:"📈",title:"Advanced Statistics",desc:"Chi-Square independence test (p-value, df), Mann-Kendall with Sen's slope chart, descriptive statistics with histogram and region box plot.",tags:["Chi-Square χ²","p-value","Box plot"]},
+  {id:"export",icon:"💾",title:"Export & Report",desc:"Download processed CSV with derived columns, auto-generate plain-text summary report, export any chart as PNG (300 dpi) or SVG.",tags:["CSV","PNG / SVG","Report"]},
+];
+const REGIONS={
+  Asia:["China","Japan","India","Bangladesh","Vietnam","Thailand","Pakistan","South Korea","Indonesia","Myanmar","Sri Lanka","Nepal","Cambodia","Philippines","Malaysia","Mongolia","Uzbekistan","Kazakhstan","Afghanistan","Laos","North Korea"],
+  Europe:["Germany","France","Netherlands","Italy","Sweden","Hungary","Bulgaria","Russia","United Kingdom","UK","Poland","Czech Republic","Slovakia","Romania","Austria","Belgium","Switzerland","Denmark","Norway","Finland","Portugal","Spain","Greece","Serbia","Croatia","Ukraine","Belarus","Lithuania","Latvia","Estonia","Slovenia"],
+  Americas:["USA","United States","Canada","Mexico","Brazil","Argentina","Colombia","Chile","Peru","Cuba","Bolivia","Ecuador","Venezuela","Uruguay"],
+  Africa:["Egypt","Ethiopia","Nigeria","Kenya","Tanzania","Ghana","Senegal","South Africa","Uganda","Rwanda","Zambia","Malawi","Mali","Sudan","Zimbabwe","Mozambique"],
+  MENA:["Turkey","Iran","Iraq","Saudi Arabia","Morocco","Tunisia","Algeria","Libya","Jordan","Lebanon","Syria","Yemen","Oman","UAE","Kuwait","Qatar","Israel","Azerbaijan"],
+  Oceania:["Australia","New Zealand","Papua New Guinea","Fiji"]
+};
+const KEY_MAP={variety:"Variety_Name",name:"Variety_Name",variety_name:"Variety_Name",crop:"Crop",species:"Species",country:"Country",year_of_release:"Year_of_Release",release_year:"Year_of_Release",year:"Year_of_Release",mutagen_type:"Mutagen_Type",mutagen:"Mutagen_Type",type_of_mutagen:"Mutagen_Type",dose:"Mutagen_Dose",mutagen_dose:"Mutagen_Dose",treated_explant:"Treated_Explant",explant:"Treated_Explant",improved_trait:"Improved_Trait",trait:"Improved_Trait",traits:"Improved_Trait",breeding_institution:"Breeding_Institution",institution:"Breeding_Institution",
+  // ── Real IAEA MVD export headers (mvd.iaea.org "Mutant Variety Details") ──
+  common_name:"Crop",latin_name:"Species",country_name:"Country",continent_name:"_Continent",
+  registration:"Year_of_Release",local_registration_year:"_LocalYear",
+  character_improvement_details:"Improved_Trait",
+  mutagen_treatment_type:"_MutCat",physical_mutagen:"_PhysMut",chemical_mutagen:"_ChemMut",
+  treatment_material_type:"Treated_Explant",mutantdevelopmenttype:"Mutant_Development",
+  propagationmodetype:"Propagation_Mode",usagesubcategory:"Usage_Category",
+  national_registration_agency:"Breeding_Institution",local_registration_agency:"_LocalAgency",
+  short_description:"_Description",miscellaneous:"_Misc",mutantvarietyid:"_ID"};
+const PAL=["#005A8E","#00A19A","#E07B00","#6B3FA0","#E74C3C","#27AE60","#F39C12","#9B59B6","#1ABC9C","#E67E22","#2980B9","#C0392B","#16A085","#8E44AD"];
+const PL=(t,x={})=>({title:{text:t,font:{color:"#E4EEF8",size:14,family:"Segoe UI"}},paper_bgcolor:"#172E44",plot_bgcolor:"#122336",font:{color:"#7A9BBB",family:"Segoe UI",size:11},xaxis:{gridcolor:"#243F5C",zerolinecolor:"#243F5C",...(x.xaxis||{})},yaxis:{gridcolor:"#243F5C",zerolinecolor:"#243F5C",...(x.yaxis||{})},margin:{l:130,r:20,t:52,b:78},...x});
+const PC={responsive:true,displaylogo:false,modeBarButtonsToRemove:["select2d","lasso2d"],toImageButtonOptions:{scale:2}};
+
+// Build home module grid
+(()=>{const g=document.getElementById("modgrid");MODS.forEach(m=>{const d=document.createElement("div");d.className="mc";d.onclick=()=>nav(m.id);d.innerHTML=`<div class="mi">${m.icon}</div><div class="mt">${m.title}</div><div class="md">${m.desc}</div><div class="ms">${m.tags.map(t=>`<span class="mtag">${t}</span>`).join("")}</div>`;g.appendChild(d);});})();
+
+// Navigation
+const TITLES={home:"🏠 Overview & Data Loading",crop:"🌿 Crop Explorer",desc:"📊 Dataset Overview",temporal:"📅 Temporal Analysis",compare:"🌍 Cross-Table & Compare",mutagen:"🧬 Mutagen Analysis",trait:"🏷️ Trait Analysis",explant:"🧫 Explant × Trait",advanced:"📈 Advanced Statistics",export:"💾 Export & Report"};
+function nav(id){document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));document.getElementById("panel-"+id).classList.add("active");document.querySelectorAll(".nb").forEach(b=>b.classList.remove("active"));document.querySelectorAll(".nb").forEach(b=>{if(b.getAttribute("onclick").includes("'"+id+"'"))b.classList.add("active");});document.getElementById("ptitle").textContent=TITLES[id]||"";}
+const setSt=m=>document.getElementById("stxt").textContent=m;
+const setPB=p=>document.getElementById("pb").style.width=(p*100)+"%";
+function logStep(m,c=""){const el=document.getElementById("flog");el.innerHTML+=`<span class="${c}">${m}</span><br>`;}
+function clearLog(){document.getElementById("flog").innerHTML="";}
+
+// ── FUZZY SUGGESTION ENGINE ───────────────────────────────────────
+function lev(a,b){const m=a.length,n=b.length;const d=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>j===0?i:i===0?j:0));for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[m][n];}
+
+function sugg(inp,listId,col){
+  const val=inp.value.trim();
+  const el=document.getElementById(listId);
+  if(!G.rows.length||!val){el.classList.remove("open");return;}
+  const vl=val.toLowerCase();
+  const uniqVals=[...new Set(G.rows.map(r=>r[col]).filter(v=>v&&v!=""))];
+  const exact=uniqVals.filter(v=>v.toLowerCase().includes(vl)).slice(0,8);
+  const hasExact=exact.length>0;
+  // Fuzzy for typos (only when no exact match and val >= 3 chars)
+  const fuzzy=(!hasExact&&vl.length>=3)?uniqVals.map(v=>({v,d:lev(vl,v.toLowerCase().slice(0,vl.length+2))})).filter(x=>x.d<=2).sort((a,b)=>a.d-b.d).slice(0,5).map(x=>x.v):[];
+  el.innerHTML="";
+  if(!hasExact&&vl.length>=3&&fuzzy.length>0){
+    el.innerHTML=`<div class="sw-warn">⚠ "${val}" not found — did you mean:</div>`;
+  } else if(!hasExact&&vl.length>=3){
+    el.innerHTML=`<div class="sw-none">No ${col} matches for "${val}"</div>`;el.classList.add("open");return;
+  }
+  const items=[...exact,...fuzzy.filter(v=>!exact.includes(v))];
+  if(!items.length){el.classList.remove("open");return;}
+  const re=new RegExp(`(${val.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`,"gi");
+  items.forEach(v=>{const div=document.createElement("div");div.className="si";div.innerHTML=v.replace(re,`<span class="m">$1</span>`);div.addEventListener("mousedown",e=>{e.preventDefault();inp.value=v;el.classList.remove("open");});el.appendChild(div);});
+  el.classList.add("open");
+}
+function suggForCol(inp,listId,selId){const col=document.getElementById(selId).value;if(col)sugg(inp,listId,col);}
+function closeSugg(id){setTimeout(()=>{const el=document.getElementById(id);if(el)el.classList.remove("open");},200);}
+
+// ── AUTO-FETCH ────────────────────────────────────────────────────
+const MVD_CSV="https://mvd.iaea.org/Assets/Files/MVD_DB.csv";
+function loadCSV(e){const f=e.target.files[0];if(!f)return;clearLog();logStep(`Reading ${f.name}…`,"fact");setPB(.1);Papa.parse(f,{header:true,skipEmptyLines:true,dynamicTyping:false,complete:r=>{setPB(1);processData(r.data,r.meta.fields||[]);},error:e=>logStep("❌ "+e.message,"ferr")});}
+function dropFile(e){e.preventDefault();document.getElementById("uz").classList.remove("drag");const f=e.dataTransfer.files[0];if(!f)return;clearLog();logStep(`Loading ${f.name}…`,"fact");setPB(.1);Papa.parse(f,{header:true,skipEmptyLines:true,dynamicTyping:false,complete:r=>{setPB(1);processData(r.data,r.meta.fields||[]);},error:e=>logStep("❌ "+e.message,"ferr")});}
+function loadDemo(){clearLog();logStep("Generating demo dataset…","fact");setPB(.3);const crops=["Rice","Wheat","Barley","Soybean","Cotton","Sunflower","Tomato","Maize","Pea","Groundnut","Rapeseed","Banana","Sorghum","Chickpea","Sesame","Mungbean","Lentil","Oat"];const SPECIES={Rice:"Oryza sativa",Wheat:"Triticum aestivum",Barley:"Hordeum vulgare",Soybean:"Glycine max",Cotton:"Gossypium hirsutum",Sunflower:"Helianthus annuus",Tomato:"Solanum lycopersicum",Maize:"Zea mays",Pea:"Pisum sativum",Groundnut:"Arachis hypogaea",Rapeseed:"Brassica napus",Banana:"Musa acuminata",Sorghum:"Sorghum bicolor",Chickpea:"Cicer arietinum",Sesame:"Sesamum indicum",Mungbean:"Vigna radiata",Lentil:"Lens culinaris",Oat:"Avena sativa"};const countries=["Japan","China","India","Bangladesh","Vietnam","South Korea","Germany","France","Netherlands","Italy","Hungary","Bulgaria","USA","Brazil","Canada","Mexico","Egypt","Turkey","Iran","Morocco","Nigeria","Ethiopia","Kenya","South Africa","Australia"];const mutagens=["Gamma rays","X-rays","Gamma rays","Gamma rays","EMS","Sodium azide","Fast neutrons","Ion beam","Gamma rays","Carbon ions","Colchicine"];const traits=["Yield improvement","Disease resistance","Lodging tolerance","Early maturity","Drought tolerance","Protein content","Oil content","Salinity tolerance","Plant height reduction","Pest resistance","Quality improvement","Short culm","Wilt resistance"];const insts=["NIRS Japan","ICAR India","CAAS China","Wageningen UR","IRRI","USDA","IPK Germany","ICARDA","AfricaRice"];const rows=[];for(let i=0;i<2800;i++){const yr=1957+Math.floor(Math.pow(Math.random(),.7)*68);const t2=Math.random()>.65?"; "+traits[Math.floor(Math.random()*traits.length)]:"";const crop=crops[Math.floor(Math.random()*crops.length)];rows.push({Variety_Name:"Var-"+String(i+1).padStart(4,"0"),Crop:crop,Species:SPECIES[crop]||"",Country:countries[Math.floor(Math.random()*countries.length)],Year_of_Release:String(yr),Mutagen_Type:mutagens[Math.floor(Math.random()*mutagens.length)],Mutagen_Dose:Math.random()>.4?String(Math.round(Math.random()*400+50)):"",Treated_Explant:["Seed","Pollen","Callus","Cutting","Bulb"][Math.floor(Math.random()*5)],Improved_Trait:traits[Math.floor(Math.random()*traits.length)]+t2,Breeding_Institution:insts[Math.floor(Math.random()*insts.length)]});}processData(rows,Object.keys(rows[0]));setPB(1);logStep("✅ Demo data ready — all 9 modules available.","fok");}
+
+// ── BUNDLED (same-origin) CSV ─────────────────────────────────────
+// Reads MVD_DB.csv shipped next to index.html. No CORS — works on GitHub Pages.
+async function loadRepoCSV(silent){
+  const btn=document.getElementById("btn-repo");if(btn)btn.disabled=true;
+  if(!silent){clearLog();logStep("⏳ Loading bundled MVD_DB.csv…","fact");setPB(.15);}
+  try{
+    const r=await fetch("MVD_DB.csv",{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const text=await r.text();
+    if(!text||text.length<500||!text.includes(","))throw new Error("File missing or not CSV");
+    if(!silent){logStep("✅ Found bundled file — parsing…","fok");setPB(.85);}
+    const p=Papa.parse(text,{header:true,skipEmptyLines:true,dynamicTyping:false});
+    if(!p.data||p.data.length<5)throw new Error("0 rows");
+    setPB(1);processData(p.data,p.meta.fields||[]);
+    if(btn)btn.disabled=false;return true;
+  }catch(e){
+    if(btn)btn.disabled=false;
+    if(!silent){setPB(0);logStep("⚠ No bundled MVD_DB.csv next to the app ("+e.message+"). Use “Load Local CSV” or “Demo Data”.","ferr");}
+    return false;
+  }
+}
+// On first load, silently try the bundled CSV. If absent, the user picks a source.
+window.addEventListener("DOMContentLoaded",()=>{loadRepoCSV(true);});
+
+// ── DATA PROCESSING ───────────────────────────────────────────────
+function processData(raw,rawCols){
+  const cm={};rawCols.forEach(c=>{const n=c.trim().toLowerCase().replace(/[\s\-\.]+/g,"_");cm[c]=KEY_MAP[n]||c;});
+  G.rows=raw.map(r=>{const o={};for(const[k,v] of Object.entries(cm)){if(r[k]!==undefined)o[v]=(r[k]||"").toString().trim();}return o;}).filter(r=>Object.values(r).some(v=>v));
+  // ── Reconcile real IAEA export shape into the suite's expected columns ──
+  // ENRICHMENT LAYER (deterministic / regex-only). Each derived value records HOW it
+  // was obtained (r._provenance) so nothing is a black box. An optional LLM fallback
+  // could later populate the same fields, but is intentionally OFF here — every value
+  // below is a literal match a user can find in the source text.
+  const DOSE=/(\d+(?:\.\d+)?)(?:\s?[-–]\s?(\d+(?:\.\d+)?))?\s?(gy|gray|kgy|krad|kr|krads|mm|mmol)\b/i;
+  function extractDose(...texts){
+    for(const t of texts){if(!t)continue;const m=DOSE.exec(t);if(m){
+      let unit=m[3].toLowerCase();if(unit==="gray")unit="gy";if(unit==="kr")unit="krad";
+      let val=parseFloat(m[1]);if(m[2])val=(val+parseFloat(m[2]))/2; // midpoint of a range
+      if(unit==="kgy"){val=val*1000;unit="gy";}
+      return{val,unit};}}
+    return null;
+  }
+  G.rows.forEach(r=>{
+    r._provenance={};
+    if(!r.Mutagen_Type){r.Mutagen_Type=r._PhysMut||r._ChemMut||"";}
+    r._mutCatExplicit=(r._MutCat||"").trim();
+    if(!r.Year_of_Release&&r._LocalYear)r.Year_of_Release=r._LocalYear;
+    if(!r.Breeding_Institution&&r._LocalAgency)r.Breeding_Institution=r._LocalAgency;
+    // DOSE — scan structured mutagen fields first (e.g. "Gamma rays, 200Gy"), then description, then misc
+    if(!r.Mutagen_Dose){
+      const d=extractDose(r._PhysMut,r._ChemMut,r._Description,r._Misc);
+      if(d){r.Mutagen_Dose=String(d.val);r._DoseUnit=d.unit;r._provenance.dose="text";}
+    }
+    if(r.Mutagen_Dose&&!r._DoseUnit)r._DoseUnit="";
+    // MUTAGEN gap-fill from text when the structured field is empty (high-precision keywords only)
+    if(!r.Mutagen_Type){
+      const blob=((r._Description||"")+" "+(r._Misc||"")).toLowerCase();
+      const map=[[/gamma/,"Gamma rays"],[/x-?ray/,"X-rays"],[/fast neutron|thermal neutron|neutron/,"Neutrons"],[/ion beam|carbon ion|heavy ion/,"Ion beam"],[/\bems\b|ethyl methanesul/,"EMS"],[/sodium azide|\bnan3\b/,"Sodium azide"],[/colchicin/,"Colchicine"],[/\buv\b|ultraviolet/,"UV"]];
+      for(const[re,name] of map){if(re.test(blob)){r.Mutagen_Type=name;r._provenance.mutagen="text";break;}}
+    }
+  });
+  G.rows.forEach(r=>{
+    const yr=parseInt(r.Year_of_Release);r._year=(!isNaN(yr)&&yr>1900&&yr<2100)?yr:null;
+    r._decade=r._year?(Math.floor(r._year/10)*10)+"s":null;r.Decade=r._decade||"?";
+    const mt=(r.Mutagen_Type||"").toLowerCase();
+    r.Mutagen_Category=/physical/i.test(r._mutCatExplicit)?"Physical":/chemical/i.test(r._mutCatExplicit)?"Chemical":/gamma|x.ray|neutron|uv|electron|ion.beam|fast.n|carbon/i.test(mt)?"Physical":/ems|sodium.azide|azide|colchicine|mms|dms|nitrous|nmh|ethyl|methyl/i.test(mt)?"Chemical":mt?"Other":"Unknown";
+    const cp=(r.Crop||"").toLowerCase();
+    r.Crop_Group=/rice|wheat|barley|maize|corn|sorghum|millet|oat|rye|triticale|buckwheat|teff/.test(cp)?"Cereals":/soybean|soy|bean|lentil|pea|chickpea|groundnut|peanut|cowpea|mung|lupin|faba|vetch|gram|pigeonpea/.test(cp)?"Legumes":/sunflower|rapeseed|canola|sesame|flax|linseed|safflower|mustard|castor|niger/.test(cp)?"Oilseeds":/cotton|jute|hemp|kenaf|ramie|fibre|fiber/.test(cp)?"Fibre":/tomato|pepper|potato|onion|garlic|carrot|cabbage|cucumber|lettuce|bean|okra|eggplant|brinjal|spinach|melon|squash|pumpkin|radish|pea/.test(cp)?"Vegetables":/apple|banana|mango|citrus|orange|lemon|grape|strawberry|peach|pear|plum|cherry|fig|date|papaya|guava|pineapple|kiwi|berry|olive|pomegranate/.test(cp)?"Fruits":/chrysanthem|rose|carnation|dahlia|tulip|orchid|lily|gladiol|hibiscus|azalea|begonia|petunia|ornament|bougainville|portulaca|canna|streptocarpus/.test(cp)?"Ornamentals":/sugarcane|sugar beet|tobacco|tea|coffee|cocoa|rubber|mint|herb|spice|medicinal/.test(cp)?"Industrial/Other crops":cp?"Other":"Unknown";
+    // Region: real export provides Continent directly; otherwise fall back to country→region lookup
+    if(r._Continent){r.Region=r._Continent;}
+    else{const co=r.Country||"";r.Region="Other";for(const[reg,cs] of Object.entries(REGIONS)){if(cs.some(c=>co.toLowerCase().includes(c.toLowerCase())||c.toLowerCase().includes(co.toLowerCase()))){r.Region=reg;break;}}}
+  });
+  G.cols=[...new Set(G.rows.flatMap(r=>Object.keys(r)).filter(k=>!k.startsWith("_")))];
+  const n=G.rows.length;
+  document.getElementById("badge").textContent=`✓ ${n.toLocaleString()} records`;
+  document.getElementById("badge").className="badge ok";
+  setSt(`Ready: ${n.toLocaleString()} varieties · ${[...new Set(G.rows.map(r=>r.Crop).filter(Boolean))].length} crops · ${[...new Set(G.rows.map(r=>r.Country).filter(Boolean))].length} countries`);
+  const years=G.rows.map(x=>x._year).filter(Boolean);
+  const sc=document.getElementById("scards");
+  sc.innerHTML='<div class="sg">'+[
+    {v:n.toLocaleString(),l:"Total Varieties",c:"var(--accent)"},
+    {v:[...new Set(G.rows.map(r=>r.Crop).filter(Boolean))].length.toLocaleString(),l:"Crop Species",c:"var(--iaea)"},
+    {v:[...new Set(G.rows.map(r=>r.Country).filter(Boolean))].length.toLocaleString(),l:"Countries",c:"var(--amber)"},
+    {v:years.length?Math.min(...years)+"–"+Math.max(...years):"—",l:"Year Range",c:"var(--purple)"},
+    {v:[...new Set(G.rows.map(r=>r.Region).filter(x=>x&&x!=="Unknown"))].length.toLocaleString(),l:"Regions",c:"var(--success)"}
+  ].map(d=>`<div class="sc"><div class="sv" style="color:${d.c}">${d.v}</div><div class="sl2">${d.l}</div></div>`).join("")+'</div>';
+  sc.style.display="block";
+  const cols=G.cols.filter(c=>!c.startsWith("_")),r=G.rows;
+  document.getElementById("coltbl").innerHTML=`<table><thead><tr><th>Column</th><th>Non-empty</th><th>Unique</th><th>Sample value</th></tr></thead><tbody>${cols.map(c=>{const v=r.map(x=>x[c]).filter(v=>v&&v!="");const s=v[0]?(v[0].length>42?v[0].slice(0,42)+"…":v[0]):"—";return`<tr><td><b>${c}</b></td><td class="num pct">${(v.length/r.length*100).toFixed(1)}%</td><td class="num">${[...new Set(v)].length.toLocaleString()}</td><td style="color:var(--muted)">${s}</td></tr>`;}).join("")}</tbody></table>`;
+  document.getElementById("colcard").style.display="block";
+  // Populate region dropdowns from the actual data (continents for real export, regions for demo)
+  const regions=[...new Set(G.rows.map(r=>r.Region).filter(x=>x&&x!=="Unknown"&&x!=="Other"))].sort();
+  document.querySelectorAll(".region-sel").forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML='<option value="">All regions</option>'+regions.map(r=>`<option>${r}</option>`).join("");
+    if(regions.includes(cur))sel.value=cur;
+  });
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function vc(rows,col,top=999){const c={};rows.forEach(r=>{const v=r[col];if(v&&v!="")c[v]=(c[v]||0)+1;});return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,top).map(([k,v])=>({key:k,count:v}));}
+function filt(o={}){let r=G.rows;if(o.country)r=r.filter(x=>(x.Country||"").toLowerCase().includes(o.country.toLowerCase()));if(o.region)r=r.filter(x=>x.Region===o.region);if(o.crop)r=r.filter(x=>(x.Crop||"").toLowerCase().includes(o.crop.toLowerCase()));if(o.y1)r=r.filter(x=>x._year&&x._year>=o.y1);if(o.y2)r=r.filter(x=>x._year&&x._year<=o.y2);if(o.fcol&&o.fval)r=r.filter(x=>(x[o.fcol]||"").toLowerCase().includes(o.fval.toLowerCase()));return r;}
+function chk(){if(!G.rows.length){alert("Please load data first (Overview tab).");return false;}return true;}
+function splitT(rows){const a=[];rows.forEach(r=>{if(!r.Improved_Trait)return;r.Improved_Trait.split(/[,;\/&+]+/).forEach(t=>{t=t.trim().toLowerCase().replace(/\s+/g," ");if(t.length>2)a.push(t);});});return a;}
+const CATS=["Yield","Disease Resist.","Abiotic Stress","Maturity","Quality","Plant Arch.","Ornamental/Colour","Pest Resist.","Fibre/Industrial","Agronomic","Other"];
+function catT(t){t=t.toLowerCase();
+  // Ornamental / colour — large in ornamental crops (e.g. chrysanthemum); check before others
+  if(/flower colou?r|flower colo|petal|bloom|ornament|inflorescen|floret|novel colou?r|colou?r mutant|colou?r change|colou?r variation|flower shape|flower form|flower size|flower type|double flower|spray type|aesthetic|decorative/.test(t))return"Ornamental/Colour";
+  // Yield & productivity
+  if(/yield|grain|biomass|producti|tuber|bulb size|fruit size|fruit weight|number of (grains|seeds|pods|fruits|tillers|spikes)|panicle|spike|ear |seed weight|thousand.grain|fill/.test(t))return"Yield";
+  // Disease resistance
+  if(/disease|resist.*(blight|rust|smut|mosaic|wilt|blast|mildew|virus|bacter|fung|rot|scab|spot|canker|anthracnose)|blight|rust|smut|mosaic|wilt|blast|mildew|downy|powdery|fusarium|phytophthora|tolerance to .*(disease|virus|fungus)/.test(t))return"Disease Resist.";
+  // Abiotic stress
+  if(/drought|salin|salt|flood|cold|frost|chill|heat|temperature|stress|water.use|water.logging|acid soil|aluminium|aluminum|abiotic|adapt|winter.hard|environmental/.test(t))return"Abiotic Stress";
+  // Maturity / phenology
+  if(/matur|earlin|early|late|phenol|harvest|days to|ripen|flowering time|earliness|growth (period|duration|cycle)|short.season|photoperiod/.test(t))return"Maturity";
+  // Quality & composition
+  if(/quality|protein|oil|fat|nutri|vitamin|flour|starch|sugar|sucrose|amylose|gluten|baking|malting|cooking|taste|flavou?r|aroma|fibre content|fiber content|seed colou?r|seed coat|grain colou?r|fragran|shelf.life|storage|milling|content/.test(t))return"Quality";
+  // Plant architecture
+  if(/lodg|dwarf|semi.dwarf|height|plant.height|compact|short.culm|short.stem|architect|stem|tiller|branch|stiff.straw|culm|erect|prostrate|growth habit|determinate|plant type|stature/.test(t))return"Plant Arch.";
+  // Pest / insect resistance
+  if(/pest|insect|aphid|nematode|borer|weevil|mite|thrip|hopper|resist.*(insect|pest)/.test(t))return"Pest Resist.";
+  // Fibre / industrial (cotton, jute, flax)
+  if(/fibre|fiber|lint|ginning|staple|spinning|industrial use/.test(t))return"Fibre/Industrial";
+  // Herbicide / agronomic handling
+  if(/herbicide|shattering|dehiscence|pod.shatter|threshab|harvestab|mechani[sz]ed|seed retention/.test(t))return"Agronomic";
+  return"Other";}
+function dlC(id,n,f){const el=document.getElementById(id);if(!el)return;
+  // Read the chart's actual rendered size so SVG/PNG export at full scale (not clipped).
+  let w=el.clientWidth||el.offsetWidth||900, h=el.clientHeight||el.offsetHeight||500;
+  try{const ld=el._fullLayout;if(ld&&ld.width)w=ld.width;if(ld&&ld.height)h=ld.height;}catch(e){}
+  Plotly.downloadImage(el,{format:f,filename:"mvd_"+n,width:Math.round(w),height:Math.round(h),scale:f==="png"?2:1});}
+// ── RESET VIEW ────────────────────────────────────────────────────
+// Record a DEEP CLONE of every render so "Reset view" fully restores the chart
+// (clears legend isolation, slice pull, zoom). Cloning is essential: Plotly mutates
+// the trace/layout objects in place during render, so replaying the same references
+// reproduces the broken state. Wraps Plotly.newPlot once; call sites are untouched.
+const __lastPlot={};
+function __clone(o){try{return structuredClone(o);}catch(e){try{return JSON.parse(JSON.stringify(o));}catch(e2){return o;}}}
+(function(){const _np=Plotly.newPlot.bind(Plotly);Plotly.newPlot=function(id,traces,layout,config){
+  try{const key=(typeof id==="string")?id:(id&&id.id);if(key)__lastPlot[key]={traces:__clone(traces),layout:__clone(layout),config:__clone(config)};}catch(e){}
+  return _np(id,traces,layout,config);};})();
+function resetView(id){const r=__lastPlot[id];const el=document.getElementById(id);if(!r||!el){return;}
+  try{Plotly.purge(el);}catch(e){}
+  Plotly.newPlot(id,__clone(r.traces),__clone(r.layout),__clone(r.config));}
+function tbl(rows,cols){return`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${r[c]!==undefined?r[c]:""}</td>`).join("")}</tr>`).join("")}</tbody></table>`;}
+function MK(s){const n=s.length;if(n<4)return null;let S=0;for(let i=0;i<n-1;i++)for(let j=i+1;j<n;j++){const d=s[j]-s[i];if(d>0)S++;else if(d<0)S--;}const vs=n*(n-1)*(2*n+5)/18;const Z=S===0?0:(S>0?(S-1)/Math.sqrt(vs):(S+1)/Math.sqrt(vs));const p=2*(1-nCDF(Math.abs(Z)));const tau=S/(n*(n-1)/2);const sl=[];for(let i=0;i<n-1;i++)for(let j=i+1;j<n;j++)sl.push((s[j]-s[i])/(j-i));sl.sort((a,b)=>a-b);return{S,Z,p,tau,slope:sl[Math.floor(sl.length/2)],significant:p<.05,trend:p<.05?(S>0?"INCREASING ↑":"DECREASING ↓"):"NO TREND →"};}
+function nCDF(x){const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;x=Math.abs(x)/Math.sqrt(2);const t=1/(1+p*x);return .5*(1+(x<0?-1:1)*(1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x)));}
+function chiP(c2,dof){if(dof<=0)return 1;const x=c2/dof;const z=Math.pow(x,1/3)-(1-2/(9*dof));return 1-nCDF(z/Math.sqrt(2/(9*dof)));}
+function annArr(rows){const a={};rows.filter(r=>r._year).forEach(r=>a[r._year]=(a[r._year]||0)+1);const arr=Object.entries(a).map(([y,c])=>({year:+y,count:c})).sort((a,b)=>a.year-b.year);let cum=0;arr.forEach(x=>{cum+=x.count;x.cum=cum;});return arr;}
+function decArr(rows){const d={};rows.filter(r=>r._year).forEach(r=>{const k=Math.floor(r._year/10)*10;d[k]=(d[k]||0)+1;});return Object.entries(d).sort((a,b)=>+a[0]-+b[0]).map(([k,v])=>({label:k+"s",count:v}));}
+function togglePy(head){const body=head.nextElementSibling;const open=body.classList.toggle("open");head.querySelector("span:last-child").textContent=open?"▲":"▼";}
+function copyPy(e,btn){e.stopPropagation();const pre=btn.closest(".pybox").querySelector("pre");navigator.clipboard.writeText(pre.innerText).then(()=>{btn.textContent="Copied!";setTimeout(()=>btn.textContent="Copy",1800);});}
+
+// ── DESCRIPTIVE ──────────────────────────────────────────────────
+function runDesc(){if(!chk())return;const col=document.getElementById("d-col").value,topN=parseInt(document.getElementById("d-topn").value)||20;const rows=filt({country:document.getElementById("d-country").value.trim(),region:document.getElementById("d-region").value});if(!G.cols.includes(col)){alert(`Column '${col}' not in dataset.`);return;}const data=vc(rows,col,topN),total=rows.length;let cum=0;document.getElementById("d-tbl").innerHTML=tbl(data.map(({key,count})=>{const p=(count/total*100).toFixed(1);cum+=parseFloat(p);return{Value:key,Count:count.toLocaleString(),"%":p,"Cum%":Math.min(cum,100).toFixed(1)};}),[" Value","Count","%","Cum%"].map(s=>s.trim()));const keys=data.map(x=>x.key),vals=data.map(x=>x.count);const ct=document.getElementById("d-ctype").value;let traces,layout;if(ct==="bar"){traces=[{type:"bar",orientation:"h",x:vals.slice().reverse(),y:keys.slice().reverse(),marker:{color:PAL[0]},hovertemplate:"%{y}: %{x:,}<extra></extra>"}];layout=PL(`${col} — Top ${topN}`,{height:Math.max(400,topN*28+80),margin:{l:185,r:40,t:52,b:55},xaxis:{title:"Count"},yaxis:{automargin:true}});}else if(ct==="barv"){traces=[{type:"bar",x:keys,y:vals,marker:{color:vals.map((_,i)=>PAL[i%PAL.length])}}];layout=PL(`${col} — Distribution`,{xaxis:{tickangle:-35},yaxis:{title:"Count"},height:430,margin:{l:65,r:20,t:52,b:105}});}else if(ct==="treemap"){traces=[{type:"treemap",labels:keys,parents:keys.map(()=>""),values:vals,textinfo:"label+percent root",marker:{colorscale:[[0,"#003F6B"],[1,"#00A19A"]]}}];layout=PL(`${col} — Treemap`,{height:490,margin:{l:10,r:10,t:52,b:10}});}else{traces=[{type:"pie",hole:.46,labels:keys,values:vals,textposition:"inside",textinfo:"percent",marker:{colors:PAL}}];layout=PL(`${col} (n=${total.toLocaleString()})`,{height:440,margin:{l:30,r:30,t:52,b:30},showlegend:true,legend:{font:{color:"#E4EEF8",size:10}}});}Plotly.newPlot("d-chart",traces,layout,PC);setSt(`Descriptive: ${col} · top ${topN} · n=${total.toLocaleString()}`);}
+
+// ── TEMPORAL ─────────────────────────────────────────────────────
+function getTR(){const fc=document.getElementById("t-fcol").value,fv=document.getElementById("t-fval").value.trim(),reg=document.getElementById("t-region").value;return filt({fcol:fc||"",fval:fv||"",region:reg});}
+function runTemporal(){if(!chk())return;const rows=getTR(),view=document.getElementById("t-view").value;const fc=document.getElementById("t-fcol").value,fv=document.getElementById("t-fval").value.trim(),reg=document.getElementById("t-region").value;const lbl=(fc&&fv)?`${fc}: "${fv}"`:(reg?`Region: ${reg}`:"All MVD");const ann=annArr(rows),dec=decArr(rows);if(!ann.length){alert("No year data.");return;}let traces=[],layout={};if(view==="annual"){traces=[{type:"bar",x:ann.map(x=>x.year),y:ann.map(x=>x.count),marker:{color:"#005A8E"}}];layout=PL(`Annual Releases — ${lbl}`,{height:440,xaxis:{title:"Year"},yaxis:{title:"Varieties"},margin:{l:65,r:20,t:52,b:65}});}else if(view==="decade"){traces=[{type:"bar",x:dec.map(x=>x.label),y:dec.map(x=>x.count),marker:{color:dec.map((_,i)=>PAL[i%PAL.length])}}];layout=PL(`Decadal Distribution — ${lbl}`,{height:440,xaxis:{title:"Decade"},yaxis:{title:"Varieties"},margin:{l:65,r:20,t:52,b:85}});}else if(view==="both"){traces=[{type:"bar",x:ann.map(x=>x.year),y:ann.map(x=>x.count),name:"Annual",marker:{color:"#005A8E"},yaxis:"y"},{type:"scatter",x:ann.map(x=>x.year),y:ann.map(x=>x.cum),name:"Cumulative",line:{color:"#E07B00",width:2.5},yaxis:"y2"}];layout={...PL(`Releases & Cumulative — ${lbl}`),height:440,yaxis:{title:"Annual",gridcolor:"#243F5C"},yaxis2:{title:"Cumulative",overlaying:"y",side:"right"},legend:{x:.02,y:.98,font:{color:"#E4EEF8"}},margin:{l:75,r:75,t:52,b:65}};}else{const mc=document.getElementById("t-mcol").value;const cats=vc(rows,mc,6).map(x=>x.key);traces=cats.map((c,i)=>{const aa=annArr(rows.filter(r=>r[mc]===c));return{type:"scatter",mode:"lines",name:c,x:aa.map(x=>x.year),y:aa.map(x=>x.count),line:{color:PAL[i%PAL.length],width:2}};});layout=PL(`Multi-Series by ${mc} — ${lbl}`,{height:440,xaxis:{title:"Year"},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8"}},margin:{l:65,r:20,t:52,b:65}});}Plotly.newPlot("t-chart",traces,layout,PC);document.getElementById("mk-res").style.display="none";setSt(`Temporal: ${lbl} · ${rows.filter(r=>r._year).length.toLocaleString()} records`);}
+// Plain-language verdict + sparse-data caution shared by both Mann-Kendall views
+function mkVerdict(res,nYears,total){
+  const dir=res.significant?(res.S>0?"rising":"falling"):"no clear";
+  const pcls=res.significant?"ok":"warn";
+  const pline=`  p-value : <span class="pval ${pcls}">${res.p.toFixed(4)}</span>  ${res.significant?"(< 0.05)":"(≥ 0.05)"}`;
+  let verdict;
+  if(res.significant){
+    verdict=`<span class="verdict ${pcls}">→ Releases show a statistically significant ${res.S>0?"upward":"downward"} trend over time (p = ${res.p.toFixed(3)}). On average ${res.slope>0?"+":""}${res.slope.toFixed(2)} varieties per year.</span>`;
+  }else{
+    verdict=`<span class="verdict warn">→ No statistically significant trend: releases neither rose nor fell consistently over time (p = ${res.p.toFixed(3)}, so the change is within what chance would produce).</span>`;
+  }
+  let sparse="";
+  if(total<30||nYears<8){
+    sparse=`<span class="sparse">⚠ Only ${total.toLocaleString()} records across ${nYears} years — quite sparse, so the test has little power to detect a trend even if one exists. Widen the filter (e.g. a whole crop or region) for a more reliable result.</span>`;
+  }
+  return {pline,verdict,sparse};
+}
+function chiVerdict(chi2,p,dof,minE,nounA,nounB){
+  const pcls=p<.05?"ok":"warn";
+  const pline=`  p-value : <span class="pval ${pcls}">${p.toFixed(4)}</span>  ${p<.05?"(< 0.05)":"(≥ 0.05)"}`;
+  const verdict=p<.05
+    ? `<span class="verdict ok">→ ${nounA} and ${nounB} are associated — the combinations differ from what independence would predict (p = ${p.toFixed(3)}).</span>`
+    : `<span class="verdict warn">→ No significant association: ${nounA} and ${nounB} look independent — differences are within chance (p = ${p.toFixed(3)}).</span>`;
+  const sparse=minE<5?`<span class="sparse">⚠ Smallest expected cell is ${minE.toFixed(1)} (< 5). The test is less reliable here — merge rare categories or widen the filter.</span>`:"";
+  return {pline,verdict,sparse};
+}
+function runMK(){if(!chk())return;const ann=annArr(getTR());if(ann.length<4){alert("Need ≥4 years of data for a Mann-Kendall test.");return;}const res=MK(ann.map(x=>x.count));const total=ann.reduce((s,x)=>s+x.count,0);const v=mkVerdict(res,ann.length,total);const el=document.getElementById("mk-res");el.style.display="block";
+  el.innerHTML=`${"─".repeat(52)}\n  Mann-Kendall Trend Test  |  ${ann.length} years  |  ${total.toLocaleString()} varieties\n${"─".repeat(52)}\n${v.pline}\n  Sen's slope : ${res.slope.toFixed(3)} varieties / year\n  Kendall's τ : ${res.tau.toFixed(4)}     S : ${res.S}     Z : ${res.Z.toFixed(3)}\n${"─".repeat(52)}\n${v.verdict}${v.sparse}`;
+  setSt(`Mann-Kendall: ${res.significant?(res.S>0?"increasing":"decreasing"):"no trend"} · p=${res.p.toFixed(4)}`);}
+
+// ── COMPARE ──────────────────────────────────────────────────────
+function getCT(){const reg=document.getElementById("c-reg").value,rows=filt({region:reg});const rc=document.getElementById("c-row").value,cc=document.getElementById("c-col").value;const tr=parseInt(document.getElementById("c-nr").value)||12,tc=parseInt(document.getElementById("c-nc").value)||8;const rk=vc(rows,rc,tr).map(x=>x.key),ck=vc(rows,cc,tc).map(x=>x.key);const ct={};rk.forEach(r=>{ct[r]={};ck.forEach(c=>ct[r][c]=0);});rows.forEach(r=>{if(ct[r[rc]]&&ct[r[rc]][r[cc]]!==undefined)ct[r[rc]][r[cc]]++;});return{rk,ck,ct,rc,cc};}
+function runHeat(){if(!chk())return;const{rk,ck,ct,rc,cc}=getCT();Plotly.newPlot("c-chart",[{type:"heatmap",x:ck,y:rk,z:rk.map(r=>ck.map(c=>ct[r][c]||0)),colorscale:[[0,"#122336"],[.4,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"},hovertemplate:`${rc}: %{y}<br>${cc}: %{x}<br>Count: %{z}<extra></extra>`}],{...PL(`${rc} × ${cc}`),height:Math.max(420,rk.length*32+120),margin:{l:165,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);document.getElementById("c-tbl").style.display="none";}
+function runStack(){if(!chk())return;const{rk,ck,ct,rc,cc}=getCT();const tots=rk.map(r=>ck.reduce((s,c)=>s+(ct[r][c]||0),0));Plotly.newPlot("c-chart",ck.map((c,i)=>({type:"bar",name:c,x:rk,y:rk.map((r,ri)=>tots[ri]?((ct[r][c]||0)/tots[ri]*100):0),marker:{color:PAL[i%PAL.length]},hovertemplate:`${c}: %{y:.1f}%<extra></extra>`})),{...PL(`${cc} % by ${rc}`),barmode:"stack",xaxis:{tickangle:-35,automargin:true},yaxis:{title:"%"},legend:{font:{color:"#E4EEF8",size:10}},height:460,margin:{l:65,r:20,t:52,b:115}},PC);document.getElementById("c-tbl").style.display="none";}
+function runGroup(){if(!chk())return;const{rk,ck,ct,rc,cc}=getCT();Plotly.newPlot("c-chart",ck.map((c,i)=>({type:"bar",name:c,x:rk,y:rk.map(r=>ct[r][c]||0),marker:{color:PAL[i%PAL.length]},hovertemplate:`${c}: %{y:,}<extra></extra>`})),{...PL(`${cc} counts by ${rc}`),barmode:"group",xaxis:{tickangle:-35,automargin:true},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:460,margin:{l:65,r:20,t:52,b:115}},PC);document.getElementById("c-tbl").style.display="none";}
+function runBubble(){if(!chk())return;const{rk,ck,ct,rc,cc}=getCT();
+  // Bubble grid: x = column category, y = row category, size & colour = count.
+  // Far more readable than a sunburst for a two-variable cross-tab.
+  const xs=[],ys=[],sz=[],cl=[],tx=[];let mx=0;
+  rk.forEach(r=>ck.forEach(c=>{const v=ct[r][c]||0;if(v>mx)mx=v;}));
+  rk.forEach(r=>ck.forEach(c=>{const v=ct[r][c]||0;if(v>0){xs.push(c);ys.push(r);sz.push(v);cl.push(v);tx.push(v);}}));
+  const ref=2.0*mx/(38*38); // sizeref so the largest bubble ≈38px
+  Plotly.newPlot("c-chart",[{type:"scatter",mode:"markers",x:xs,y:ys,text:tx,
+    marker:{size:sz,sizemode:"area",sizeref:ref,sizemin:4,color:cl,colorscale:[[0,"#1B4B6B"],[.5,"#0E7C9B"],[1,"#00A19A"]],showscale:true,colorbar:{title:{text:"Count",font:{color:"#E4EEF8",size:11}},tickfont:{color:"#9FB8CE",size:10}},line:{color:"#0D1B2A",width:1}},
+    hovertemplate:"%{y} × %{x}<br>Count: %{text}<extra></extra>"}],
+    {...PL(`${rc} × ${cc} — bubble grid (size = count)`),height:Math.max(360,rk.length*34+140),
+     margin:{l:160,r:30,t:52,b:120},xaxis:{tickangle:-35,automargin:true,gridcolor:"#1C3350",type:"category"},yaxis:{automargin:true,gridcolor:"#1C3350",type:"category"}},PC);
+  document.getElementById("c-tbl").style.display="none";setSt(`Bubble grid: ${rc} × ${cc}`);}
+function showCT(){if(!chk())return;const{rk,ck,ct,rc,cc}=getCT();document.getElementById("c-tbl").style.display="block";document.getElementById("c-tbl").innerHTML=tbl(rk.map(r=>{const o={[rc]:r};let t=0;ck.forEach(c=>{o[c]=ct[r][c]||0;t+=o[c];});o.Total=t;return o;}),[rc,...ck,"Total"]);}
+
+// ── MUTAGEN ──────────────────────────────────────────────────────
+function getMR(){const reg=document.getElementById("m-reg").value;return filt({crop:document.getElementById("m-crop").value.trim(),country:document.getElementById("m-co").value.trim(),region:reg,y1:parseInt(document.getElementById("m-y1").value)||0,y2:parseInt(document.getElementById("m-y2").value)||9999});}
+function mDonut(){if(!chk())return;const rows=getMR(),data=vc(rows,"Mutagen_Category",6);Plotly.newPlot("m-chart",[{type:"pie",hole:.5,labels:data.map(x=>x.key),values:data.map(x=>x.count),textposition:"inside",textinfo:"percent+label",marker:{colors:PAL},hovertemplate:"%{label}: %{value:,} (%{percent})<extra></extra>"}],{...PL(`Mutagen Distribution (n=${rows.length.toLocaleString()})`),height:470,margin:{l:20,r:20,t:52,b:20},showlegend:false},PC);}
+function mDecade(){if(!chk())return;const rows=getMR().filter(r=>r._year);const cats=vc(rows,"Mutagen_Category",6).map(x=>x.key);const decs=[...new Set(rows.map(r=>Math.floor(r._year/10)*10))].sort();const ct={};decs.forEach(d=>{ct[d]={};cats.forEach(c=>ct[d][c]=0);});rows.forEach(r=>{const d=Math.floor(r._year/10)*10;if(ct[d])ct[d][r.Mutagen_Category]=(ct[d][r.Mutagen_Category]||0)+1;});Plotly.newPlot("m-chart",cats.map((c,i)=>({type:"bar",name:c,x:decs.map(d=>d+"s"),y:decs.map(d=>ct[d][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Mutagen Usage — Decadal Shift"),barmode:"stack",xaxis:{title:"Decade"},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:450,margin:{l:65,r:20,t:52,b:85}},PC);}
+function mCropHeat(){if(!chk())return;const rows=getMR();const tc=vc(rows,"Crop",18).map(x=>x.key);const cats=vc(rows,"Mutagen_Category",6).map(x=>x.key);const ct={};tc.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(ct[r.Crop]&&ct[r.Crop][r.Mutagen_Category]!==undefined)ct[r.Crop][r.Mutagen_Category]++;});Plotly.newPlot("m-chart",[{type:"heatmap",x:cats,y:tc,z:tc.map(c=>cats.map(m=>ct[c][m]||0)),colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL("Crop × Mutagen Category"),height:Math.max(420,tc.length*28+120),margin:{l:145,r:20,t:52,b:85},xaxis:{tickangle:-30},yaxis:{automargin:true}},PC);}
+function mCountry(){if(!chk())return;const rows=getMR();const tco=vc(rows,"Country",15).map(x=>x.key);const cats=vc(rows,"Mutagen_Category",4).map(x=>x.key);const ct={};tco.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(ct[r.Country]&&ct[r.Country][r.Mutagen_Category]!==undefined)ct[r.Country][r.Mutagen_Category]++;});Plotly.newPlot("m-chart",cats.map((c,i)=>({type:"bar",name:c,x:tco,y:tco.map(k=>ct[k][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Country × Mutagen Category"),barmode:"stack",xaxis:{tickangle:-35,automargin:true},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:460,margin:{l:65,r:20,t:52,b:115}},PC);}
+function mDose(){if(!chk())return;const vals=getMR().map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);if(!vals.length){alert("No dose values were found in the descriptions for this selection. Dose is extracted from text and is present for roughly half of records.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;Plotly.newPlot("m-chart",[{type:"histogram",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(0)} Gy`}],{...PL(`Reported Dose — mostly Gy (n=${vals.length.toLocaleString()}, from text)`),height:430,margin:{l:65,r:20,t:52,b:65},xaxis:{title:"Dose (Gy)"},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);}
+
+// ── TRAIT ────────────────────────────────────────────────────────
+function getTrR(){const reg=document.getElementById("tr-reg").value;let r=filt({crop:document.getElementById("tr-crop").value.trim(),country:document.getElementById("tr-co").value.trim(),region:reg});const cg=document.getElementById("tr-cg");if(cg&&cg.value)r=r.filter(x=>x.Crop_Group===cg.value);return r;}
+function trFreq(){if(!chk())return;if(!G.cols.includes("Improved_Trait")){alert("'Improved_Trait' column not found.");return;}const rows=getTrR(),topN=parseInt(document.getElementById("tr-n").value)||20;const traits=splitT(rows);const cnt={};traits.forEach(t=>cnt[t]=(cnt[t]||0)+1);const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,topN);document.getElementById("tr-tbl").innerHTML=tbl(top.map(([k,v])=>({Trait:k,Count:v.toLocaleString(),"%":(v/traits.length*100).toFixed(1)})),["Trait","Count","%"]);Plotly.newPlot("tr-chart",[{type:"bar",orientation:"h",x:top.map(x=>x[1]).reverse(),y:top.map(x=>x[0]).reverse(),marker:{color:"#00A19A"},hovertemplate:"%{y}: %{x:,}<extra></extra>"}],PL(`Top ${topN} Improved Traits`,{height:Math.max(400,topN*27+90),margin:{l:205,r:30,t:52,b:55},xaxis:{title:"Frequency"},yaxis:{automargin:true}}),PC);}
+function trCat(){if(!chk())return;if(!G.cols.includes("Improved_Trait"))return;const rows=getTrR();const traits=splitT(rows);const cnt={};traits.forEach(t=>{const c=catT(t);cnt[c]=(cnt[c]||0)+1;});const sorted=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);document.getElementById("tr-tbl").innerHTML=tbl(sorted.map(([k,v])=>({Category:k,Count:v.toLocaleString(),"%":(v/traits.length*100).toFixed(1)})),["Category","Count","%"]);Plotly.newPlot("tr-chart",[{type:"pie",hole:.48,labels:sorted.map(x=>x[0]),values:sorted.map(x=>x[1]),textposition:"inside",textinfo:"percent",marker:{colors:PAL}}],{...PL(`Trait Categories (n=${traits.length.toLocaleString()})`),height:455,margin:{l:20,r:20,t:52,b:20},showlegend:true,legend:{font:{color:"#E4EEF8",size:10}}},PC);}
+function trHeat(){if(!chk())return;if(!G.cols.includes("Improved_Trait"))return;const rows=getTrR();const tc=vc(rows,"Crop",14).map(x=>x.key);const cats=CATS;const ct={};tc.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(!r.Improved_Trait||!ct[r.Crop])return;r.Improved_Trait.split(/[,;\/&+]+/).forEach(t=>{const c=catT(t.trim().toLowerCase());ct[r.Crop][c]=(ct[r.Crop][c]||0)+1;});});Plotly.newPlot("tr-chart",[{type:"heatmap",x:cats,y:tc,z:tc.map(c=>cats.map(m=>ct[c][m]||0)),colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL("Crop × Trait Category"),height:Math.max(400,tc.length*28+120),margin:{l:145,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);}
+function trDecade(){if(!chk())return;if(!G.cols.includes("Improved_Trait"))return;const rows=getTrR().filter(r=>r._year);const decs=[...new Set(rows.map(r=>Math.floor(r._year/10)*10))].sort();const cats=CATS;const ct={};decs.forEach(d=>{ct[d]={};cats.forEach(c=>ct[d][c]=0);});rows.forEach(r=>{if(!r.Improved_Trait)return;const d=Math.floor(r._year/10)*10;r.Improved_Trait.split(/[,;\/&+]+/).forEach(t=>{const c=catT(t.trim().toLowerCase());if(ct[d])ct[d][c]=(ct[d][c]||0)+1;});});Plotly.newPlot("tr-chart",cats.map((c,i)=>({type:"bar",name:c,x:decs.map(d=>d+"s"),y:decs.map(d=>ct[d][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Trait Focus — Decadal Shift"),barmode:"stack",xaxis:{title:"Decade"},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}},height:460,margin:{l:65,r:20,t:52,b:85}},PC);}
+// ── DEVELOPMENT METHOD × TRAIT (the clean "origin" analysis) ──
+// Uses MutantDevelopmentType (e.g. "Direct development of an induced mutant" vs "Crossing with one mutant")
+function trDevel(){
+  if(!chk())return;
+  if(!G.cols.includes("Mutant_Development")){alert("This dataset has no 'MutantDevelopmentType' column — the Development × Trait view needs it (present in the official IAEA MVD export).");return;}
+  if(!G.cols.includes("Improved_Trait")){alert("'Improved_Trait' column not found.");return;}
+  const rows=getTrR().filter(r=>r.Mutant_Development&&r.Improved_Trait);
+  if(!rows.length){alert("No rows with both development type and trait under the current filters.");return;}
+  // shorten the long development-type labels for the axis
+  const short=s=>s.replace(/Direct development of an induced mutant/i,"Direct mutant")
+    .replace(/Crossing with one mutant variety/i,"Cross × mutant variety")
+    .replace(/Crossing with one mutant/i,"Cross × 1 mutant")
+    .replace(/Crossing of two mutants/i,"Cross × 2 mutants")
+    .replace(/Mutagenic treatment of Hybrid F1.*/i,"Mutagen on F1 hybrid")
+    .replace(/Mutagenic treatment of breeding material.*/i,"Mutagen on breeding material")
+    .replace(/Vegetative tissue isolated from a chimeric mutant/i,"Chimeric (vegetative)");
+  const devs=vc(rows,"Mutant_Development",8).map(x=>x.key);
+  const cats=CATS;
+  const ct={};devs.forEach(d=>{ct[d]={};cats.forEach(c=>ct[d][c]=0);});
+  rows.forEach(r=>{const d=r.Mutant_Development;if(!ct[d])return;r.Improved_Trait.split(/[,;\/&+]+/).forEach(t=>{const c=catT(t.trim().toLowerCase());ct[d][c]=(ct[d][c]||0)+1;});});
+  // row-normalised % so direct-mutants (the majority) don't swamp the crossing methods
+  const z=devs.map(d=>{const tot=cats.reduce((s,c)=>s+(ct[d][c]||0),0);return cats.map(c=>tot?(ct[d][c]||0)/tot*100:0);});
+  document.getElementById("tr-tbl").innerHTML=tbl(devs.map(d=>{const o={Development:short(d)};let t=0;cats.forEach(c=>{o[c]=ct[d][c]||0;t+=o[c];});o.Total=t;return o;}),["Development",...cats,"Total"]);
+  Plotly.newPlot("tr-chart",[{type:"heatmap",x:cats,y:devs.map(short),z,colorscale:[[0,"#122336"],[.5,"#6B3FA0"],[1,"#00A19A"]],texttemplate:"%{z:.0f}%",textfont:{size:10,color:"#E4EEF8"},hovertemplate:"%{y}<br>%{x}: %{z:.1f}% of this method<extra></extra>"}],{...PL("Development Method × Trait (row-normalised %)"),height:460,margin:{l:200,r:20,t:52,b:90},xaxis:{tickangle:-30},yaxis:{automargin:true}},PC);
+  setSt(`Development × Trait · ${rows.length.toLocaleString()} varieties`);
+}
+
+// ── ADVANCED ─────────────────────────────────────────────────────
+function runChi(){if(!chk())return;const v1=document.getElementById("chi1").value,v2=document.getElementById("chi2").value,topN=parseInt(document.getElementById("chi-n").value)||10;const t1=vc(G.rows,v1,topN).map(x=>x.key),t2=vc(G.rows,v2,topN).map(x=>x.key);const rows=G.rows.filter(r=>t1.includes(r[v1])&&t2.includes(r[v2]));if(!rows.length){alert("No data.");return;}const obs=t1.map(a=>t2.map(b=>rows.filter(r=>r[v1]===a&&r[v2]===b).length));const rT=obs.map(r=>r.reduce((s,v)=>s+v,0));const cT=t2.map((_,j)=>obs.reduce((s,r)=>s+r[j],0));const N=rows.length;const exp=t1.map((_,i)=>t2.map((_,j)=>rT[i]*cT[j]/N));let chi2=0,minE=Infinity;obs.forEach((r,i)=>r.forEach((o,j)=>{const e=exp[i][j];if(e<minE)minE=e;if(e>0)chi2+=(o-e)**2/e;}));const dof=(t1.length-1)*(t2.length-1);const p=chiP(chi2,dof);const cv=chiVerdict(chi2,p,dof,minE,v1,v2);document.getElementById("chi-res").innerHTML=`${"─".repeat(52)}\n  Chi-Square Independence Test: ${v1} × ${v2}\n  N = ${N.toLocaleString()}\n${"─".repeat(52)}\n${cv.pline}\n  χ² : ${chi2.toFixed(3)}     df : ${dof}     min expected : ${minE.toFixed(2)}\n${"─".repeat(52)}\n${cv.verdict}${cv.sparse}`;Plotly.newPlot("chi-chart",[{type:"heatmap",x:t2,y:t1,z:obs,colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#005A8E"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL(`${v1} × ${v2}  (χ²=${chi2.toFixed(2)}, p=${p.toFixed(4)})`),height:Math.max(300,t1.length*28+100),margin:{l:165,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);setSt(`χ²=${chi2.toFixed(2)}, p=${p.toFixed(4)}, dof=${dof}`);}
+function runMK2(){if(!chk())return;const fc=document.getElementById("mk2-col").value,fv=document.getElementById("mk2-val").value.trim(),y1=parseInt(document.getElementById("mk2-y1").value)||1960,y2=parseInt(document.getElementById("mk2-y2").value)||2024;const rows=filt({fcol:fc||"",fval:fv||""}).filter(r=>r._year&&r._year>=y1&&r._year<=y2);const ann=annArr(rows);if(ann.length<4){document.getElementById("mk2-res").textContent="⚠ Need at least 4 years.";return;}const res=MK(ann.map(x=>x.count));const total=ann.reduce((s,x)=>s+x.count,0);const lbl=(fc&&fv)?`${fc}: "${fv}"`:`All (${y1}–${y2})`;const v=mkVerdict(res,ann.length,total);document.getElementById("mk2-res").innerHTML=`${"─".repeat(52)}\n  Mann-Kendall — ${lbl}  |  ${ann.length} years  |  ${total.toLocaleString()} varieties\n${"─".repeat(52)}\n${v.pline}\n  Sen's slope : ${res.slope.toFixed(3)} varieties / year\n  Kendall's τ : ${res.tau.toFixed(4)}\n${"─".repeat(52)}\n${v.verdict}${v.sparse}`;const yrs=ann.map(x=>x.year),cnts=ann.map(x=>x.count),cums=ann.map(x=>x.cum);Plotly.newPlot("mk2-chart",[{type:"bar",x:yrs,y:cnts,name:"Annual",marker:{color:"#005A8E"},yaxis:"y"},{type:"scatter",x:yrs,y:cnts.map((_,i)=>cnts[0]+res.slope*i),name:"Sen's slope",line:{color:"#E07B00",width:2,dash:"dash"},yaxis:"y"},{type:"scatter",x:yrs,y:cums,name:"Cumulative",line:{color:"#00A19A",width:2},yaxis:"y2"}],{...PL(`${lbl}`),height:380,yaxis:{title:"Annual",gridcolor:"#243F5C"},yaxis2:{title:"Cumulative",overlaying:"y",side:"right"},legend:{x:.02,y:.98,font:{color:"#E4EEF8",size:10}},margin:{l:65,r:80,t:52,b:65}},PC);setSt(`MK: ${res.trend} · p=${res.p.toFixed(4)}`);}
+function runNS(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const cropf=document.getElementById("ns-crop").value.trim();const rows=filt({crop:cropf,region:reg});const isDose=col==="Mutagen_Dose";
+  let vals;if(isDose){vals=rows.filter(r=>!r._DoseUnit||/gy/.test(r._DoseUnit)).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}
+  if(!vals.length){document.getElementById("ns-tbl").innerHTML='<div class="rb">No '+(isDose?"Gy dose values found in text for this selection.":"numeric data for this column.")+'</div>';return;}
+  vals.sort((a,b)=>a-b);const n=vals.length,mean=vals.reduce((s,v)=>s+v,0)/n,med=n%2===0?(vals[n/2-1]+vals[n/2])/2:vals[Math.floor(n/2)],std=Math.sqrt(vals.reduce((s,v)=>s+(v-mean)**2,0)/(n-1)),q1=vals[Math.floor(n*.25)],q3=vals[Math.floor(n*.75)];
+  const u=isDose?" Gy":"";const lbl=isDose?"Reported dose":(col==="Year_of_Release"?"Release year":col);
+  const scope=[cropf&&`crop "${cropf}"`,reg&&`region ${reg}`].filter(Boolean).join(", ")||"the whole dataset";
+  if(isDose){
+    const cov=`${n.toLocaleString()} of ${rows.length.toLocaleString()} matching records had a Gy dose recoverable from text`;
+    document.getElementById("ns-tbl").innerHTML=`<div class="rb">`+
+      `<div class="verdict ok" style="font-size:14px">Most varieties in ${scope} used a dose around ${med.toFixed(0)} Gy.</div>`+
+      `<div style="margin-top:8px;line-height:1.7">`+
+      `Typical range (middle 50%): <strong>${q1.toFixed(0)}–${q3.toFixed(0)} Gy</strong><br>`+
+      `Full spread: ${vals[0].toFixed(0)} Gy (lowest) to ${vals[n-1].toFixed(0)} Gy (highest)<br>`+
+      `Average: ${mean.toFixed(0)} Gy  ·  Median: ${med.toFixed(0)} Gy</div>`+
+      `<span class="sparse">Doses are read from the text of each record (≈half the database). ${cov}. Treat as an indicative picture of reported doses, not a complete census.</span></div>`;
+  }else{
+    document.getElementById("ns-tbl").innerHTML=`<div class="rb">`+
+      `<div class="verdict ok" style="font-size:14px">${lbl} in ${scope}: typically ${med.toFixed(0)}, ranging ${vals[0]}–${vals[n-1]}.</div>`+
+      `<div style="margin-top:8px;line-height:1.7">Middle 50% fall between <strong>${q1}</strong> and <strong>${q3}</strong>.<br>Average ${mean.toFixed(1)}, median ${med.toFixed(0)}, based on ${n.toLocaleString()} records.</div></div>`;
+  }
+  setSt(`${lbl} summary · n=${n.toLocaleString()}`);}
+function runHist(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const rows=filt({crop:document.getElementById("ns-crop").value.trim(),region:reg});const isDose=col==="Mutagen_Dose";let vals;if(isDose){vals=rows.filter(r=>!r._DoseUnit||/gy/.test(r._DoseUnit)).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}if(!vals.length){alert(isDose?"No Gy dose values were found in the descriptions for this selection.":"No numeric data for this column.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;const ax=isDose?"Dose (Gy)":col;Plotly.newPlot("ns-chart",[{type:"histogram",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(isDose?0:1)}${isDose?" Gy":""}`}],{...PL(`${isDose?"Reported Gamma/Physical Dose":col+" Distribution"}  (n=${vals.length.toLocaleString()}${isDose?", Gy from text":""})`),height:370,margin:{l:65,r:20,t:52,b:65},xaxis:{title:ax},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);if(isDose)setSt(`Dose histogram · ${vals.length.toLocaleString()} of ${rows.length.toLocaleString()} records had a Gy dose in text`);}
+
+
+// ── CROP EXPLORER ────────────────────────────────────────────────
+// Combined Crop + Species suggestion box, e.g. "Lentil (Lens culinaris) — 87 varieties"
+function cropIndex(){
+  // group rows by Crop; capture a representative Species for the label
+  const m={};
+  G.rows.forEach(r=>{
+    const c=(r.Crop||"").trim(); if(!c)return;
+    if(!m[c])m[c]={crop:c,species:new Set(),n:0};
+    m[c].n++; if(r.Species&&r.Species.trim())m[c].species.add(r.Species.trim());
+  });
+  return Object.values(m).map(o=>({crop:o.crop,species:[...o.species][0]||"",n:o.n}))
+    .sort((a,b)=>b.n-a.n);
+}
+function ceLabel(o){return `${o.crop}${o.species?` (${o.species})`:""} — ${o.n} varieties`;}
+function ceSugg(inp){
+  const el=document.getElementById("ce-sl"),val=inp.value.trim();
+  if(!G.rows.length||!val){el.classList.remove("open");return;}
+  const vl=val.toLowerCase(),idx=cropIndex();
+  let hits=idx.filter(o=>o.crop.toLowerCase().includes(vl)||(o.species&&o.species.toLowerCase().includes(vl)));
+  let warn="";
+  if(!hits.length&&vl.length>=3){
+    hits=idx.map(o=>({o,d:Math.min(lev(vl,o.crop.toLowerCase().slice(0,vl.length+2)),o.species?lev(vl,o.species.toLowerCase().slice(0,vl.length+2)):99)}))
+      .filter(x=>x.d<=2).sort((a,b)=>a.d-b.d).slice(0,6).map(x=>x.o);
+    if(hits.length)warn=`<div class="sw-warn">⚠ "${val}" not found — did you mean:</div>`;
+  }
+  hits=hits.slice(0,8);
+  if(!hits.length){el.innerHTML=`<div class="sw-none">No crop / species matches "${val}"</div>`;el.classList.add("open");return;}
+  const re=new RegExp(`(${val.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`,"gi");
+  el.innerHTML=warn+hits.map(o=>`<div class="si" data-crop="${o.crop.replace(/"/g,'&quot;')}">${ceLabel(o).replace(re,'<span class="m">$1</span>')}</div>`).join("");
+  el.querySelectorAll(".si").forEach(div=>div.addEventListener("mousedown",e=>{e.preventDefault();document.getElementById("ce-q").value=div.dataset.crop;el.classList.remove("open");}));
+  el.classList.add("open");
+}
+function ceRun(){
+  if(!chk())return;
+  const q=document.getElementById("ce-q").value.trim();
+  if(!q){alert("Type a crop or species name first.");return;}
+  const ql=q.toLowerCase();
+  let rows=G.rows.filter(r=>(r.Crop||"").toLowerCase()===ql);
+  if(!rows.length)rows=G.rows.filter(r=>(r.Crop||"").toLowerCase().includes(ql)||(r.Species||"").toLowerCase().includes(ql));
+  if(!rows.length){document.getElementById("ce-head").textContent=`No varieties found for "${q}".`;document.getElementById("ce-body").style.display="none";document.getElementById("ce-cards").style.display="none";return;}
+  const cropName=vc(rows,"Crop",1)[0].key;
+  const species=[...new Set(rows.map(r=>r.Species).filter(Boolean))][0]||"";
+  document.getElementById("ce-head").innerHTML=`<strong style="color:var(--accent)">${cropName}</strong>${species?` · <em>${species}</em>`:""} · ${rows.length.toLocaleString()} varieties`;
+
+  // summary cards
+  const yrs=rows.map(r=>r._year).filter(Boolean);
+  const topCo=vc(rows,"Country",1)[0], topMut=vc(rows,"Mutagen_Category",1)[0];
+  document.getElementById("ce-cards").style.display="block";
+  document.getElementById("ce-cards").innerHTML='<div class="sg">'+[
+    {v:rows.length.toLocaleString(),l:"Varieties",c:"var(--accent)"},
+    {v:[...new Set(rows.map(r=>r.Country).filter(Boolean))].length,l:"Countries",c:"var(--iaea)"},
+    {v:yrs.length?Math.min(...yrs)+"–"+Math.max(...yrs):"—",l:"Year Range",c:"var(--purple)"},
+    {v:topCo?topCo.key:"—",l:"Top Country",c:"var(--amber)"},
+    {v:topMut?topMut.key:"—",l:"Main Mutagen",c:"var(--success)"}
+  ].map(d=>`<div class="sc"><div class="sv" style="color:${d.c};font-size:${String(d.v).length>10?"17px":"26px"}">${d.v}</div><div class="sl2">${d.l}</div></div>`).join("")+'</div>';
+
+  document.getElementById("ce-body").style.display="block";
+
+  // 1 timeline
+  const ann=annArr(rows);
+  Plotly.newPlot("ce-time",[{type:"bar",x:ann.map(x=>x.year),y:ann.map(x=>x.count),name:"Annual",marker:{color:"#005A8E"}},{type:"scatter",x:ann.map(x=>x.year),y:ann.map(x=>x.cum),name:"Cumulative",yaxis:"y2",line:{color:"#E07B00",width:2.5}}],{...PL(`${cropName} — Releases over time`),height:340,yaxis:{title:"Annual"},yaxis2:{title:"Cumulative",overlaying:"y",side:"right"},legend:{x:.02,y:.98,font:{color:"#E4EEF8",size:10}},margin:{l:60,r:70,t:48,b:55}},PC);
+
+  // 2 country
+  const co=vc(rows,"Country",12);
+  Plotly.newPlot("ce-country",[{type:"bar",orientation:"h",x:co.map(x=>x.count).reverse(),y:co.map(x=>x.key).reverse(),marker:{color:"#00A19A"},hovertemplate:"%{y}: %{x:,}<extra></extra>"}],PL(`Top countries — ${cropName}`,{height:Math.max(280,co.length*26+90),margin:{l:140,r:25,t:48,b:50},xaxis:{title:"Varieties"},yaxis:{automargin:true}}),PC);
+
+  // 3 mutagen
+  const mut=vc(rows,"Mutagen_Type",10);
+  Plotly.newPlot("ce-mut",[{type:"bar",x:mut.map(x=>x.key),y:mut.map(x=>x.count),marker:{color:mut.map((_,i)=>PAL[i%PAL.length])}}],PL(`Mutagens used — ${cropName}`,{height:340,xaxis:{tickangle:-30,automargin:true},yaxis:{title:"Varieties"},margin:{l:60,r:20,t:48,b:95}}),PC);
+
+  // 4 trait categories
+  if(G.cols.includes("Improved_Trait")){
+    const tr=splitT(rows),cnt={};tr.forEach(t=>{const c=catT(t);cnt[c]=(cnt[c]||0)+1;});
+    const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    Plotly.newPlot("ce-trait",[{type:"pie",hole:.48,labels:s.map(x=>x[0]),values:s.map(x=>x[1]),textinfo:"percent+label",textposition:"inside",marker:{colors:PAL}}],{...PL(`Trait focus — ${cropName}`),height:360,margin:{l:20,r:20,t:48,b:20},showlegend:false},PC);
+  }else{document.getElementById("ce-trait").innerHTML='<p style="color:var(--muted);padding:20px">No Improved_Trait column in this dataset.</p>';}
+
+  // 5 explant
+  if(G.cols.includes("Treated_Explant")){
+    const ex=vc(rows,"Treated_Explant",10);
+    Plotly.newPlot("ce-exp",[{type:"bar",x:ex.map(x=>x.key),y:ex.map(x=>x.count),marker:{color:ex.map((_,i)=>PAL[(i+3)%PAL.length])}}],PL(`Treated explants — ${cropName}`,{height:330,xaxis:{tickangle:-25,automargin:true},yaxis:{title:"Varieties"},margin:{l:60,r:20,t:48,b:80}}),PC);
+  }else{document.getElementById("ce-exp").innerHTML='<p style="color:var(--muted);padding:20px">No Treated_Explant column in this dataset.</p>';}
+
+  // 6 institutions / registration agencies (real export has no breeder field — falls back to agency)
+  const inst=vc(rows,"Breeding_Institution",12);
+  const instCov=rows.filter(r=>r.Breeding_Institution).length/rows.length;
+  if(!inst.length||instCov<0.05){
+    document.getElementById("ce-inst").innerHTML='<p style="color:var(--muted);padding:22px;text-align:center">No breeding-institution / registration-agency data recorded for this crop.</p>';
+  }else{
+    Plotly.newPlot("ce-inst",[{type:"bar",orientation:"h",x:inst.map(x=>x.count).reverse(),y:inst.map(x=>x.key.length>40?x.key.slice(0,40)+"…":x.key).reverse(),marker:{color:"#6B3FA0"},hovertemplate:"%{y}: %{x:,}<extra></extra>"}],PL(`Institutions / agencies — ${cropName}`,{height:Math.max(280,inst.length*26+90),margin:{l:230,r:25,t:48,b:50},xaxis:{title:"Varieties"},yaxis:{automargin:true}}),PC);
+  }
+
+  // 7 explant x trait (this crop)
+  if(G.cols.includes("Treated_Explant")&&G.cols.includes("Improved_Trait")){
+    const exps=vc(rows,"Treated_Explant",8).map(x=>x.key);
+    const cats=CATS;
+    const ct={};exps.forEach(e=>{ct[e]={};cats.forEach(c=>ct[e][c]=0);});
+    rows.forEach(r=>{const e=r.Treated_Explant;if(!ct[e]||!r.Improved_Trait)return;r.Improved_Trait.split(/[,;\/&+]+/).forEach(t=>{const c=catT(t.trim().toLowerCase());ct[e][c]=(ct[e][c]||0)+1;});});
+    Plotly.newPlot("ce-xt",[{type:"heatmap",x:cats,y:exps,z:exps.map(e=>cats.map(c=>ct[e][c]||0)),colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL(`Explant × Trait — ${cropName}`),height:Math.max(280,exps.length*30+120),margin:{l:120,r:20,t:48,b:110},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);
+  }else{document.getElementById("ce-xt").innerHTML='<p style="color:var(--muted);padding:20px">Needs both Treated_Explant and Improved_Trait columns.</p>';}
+
+  setSt(`Crop Explorer: ${cropName} · ${rows.length.toLocaleString()} varieties`);
+}
+
+// ── EXPLANT × TRAIT (standalone) ─────────────────────────────────
+function exCropSugg(inp){
+  // suggest from both Crop and Species
+  const el=document.getElementById("ex-crop-sl"),val=inp.value.trim();
+  if(!G.rows.length||!val){el.classList.remove("open");return;}
+  const vl=val.toLowerCase();
+  const vals=[...new Set(G.rows.flatMap(r=>[r.Crop,r.Species]).filter(v=>v&&v.trim()))];
+  let hits=vals.filter(v=>v.toLowerCase().includes(vl)).slice(0,8);
+  if(!hits.length&&vl.length>=3)hits=vals.map(v=>({v,d:lev(vl,v.toLowerCase().slice(0,vl.length+2))})).filter(x=>x.d<=2).sort((a,b)=>a.d-b.d).slice(0,6).map(x=>x.v);
+  if(!hits.length){el.innerHTML=`<div class="sw-none">No matches for "${val}"</div>`;el.classList.add("open");return;}
+  const re=new RegExp(`(${val.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`,"gi");
+  el.innerHTML=hits.map(v=>`<div class="si">${v.replace(re,'<span class="m">$1</span>')}</div>`).join("");
+  el.querySelectorAll(".si").forEach(div=>div.addEventListener("mousedown",e=>{e.preventDefault();inp.value=div.textContent;el.classList.remove("open");}));
+  el.classList.add("open");
+}
+function getExR(){
+  const cq=document.getElementById("ex-crop").value.trim().toLowerCase();
+  let r=filt({country:document.getElementById("ex-co").value.trim(),region:document.getElementById("ex-reg").value});
+  if(cq)r=r.filter(x=>(x.Crop||"").toLowerCase().includes(cq)||(x.Species||"").toLowerCase().includes(cq));
+  return r;
+}
+function exCheck(){
+  if(!chk())return null;
+  if(!G.cols.includes("Treated_Explant")){alert("'Treated_Explant' column not found in this dataset.");return null;}
+  if(!G.cols.includes("Improved_Trait")){alert("'Improved_Trait' column not found in this dataset.");return null;}
+  const all=getExR();
+  if(!all.length){alert("No rows match the current filters.");return null;}
+  // Use only records that actually record an explant (drop blanks and the catch-all "Others")
+  const rows=all.filter(r=>r.Treated_Explant&&!/^others?$/i.test(r.Treated_Explant.trim()));
+  if(!rows.length){alert("None of the matching records record a specific treated explant — this field is filled for about half the database, and is blank for this selection.");return null;}
+  const coverage=rows.length/all.length;
+  const exps=vc(rows,"Treated_Explant",parseInt(document.getElementById("ex-n").value)||8).map(x=>x.key);
+  const cats=CATS;
+  const ct={};exps.forEach(e=>{ct[e]={};cats.forEach(c=>ct[e][c]=0);});
+  rows.forEach(r=>{const e=r.Treated_Explant;if(!ct[e]||!r.Improved_Trait)return;r.Improved_Trait.split(/[,;\/&+]+/).forEach(t=>{const c=catT(t.trim().toLowerCase());ct[e][c]=(ct[e][c]||0)+1;});});
+  return{rows,exps,cats,ct,coverage,total:all.length};
+}
+function exNote(d){return d.coverage<0.6?`<span class="sparse">⚠ Explant is recorded for only ${(d.coverage*100).toFixed(0)}% of the ${d.total.toLocaleString()} matching records (${d.rows.length.toLocaleString()} usable). Read these proportions as indicative, not a full census.</span>`:"";}
+function exLbl(){const c=document.getElementById("ex-crop").value.trim(),co=document.getElementById("ex-co").value.trim(),reg=document.getElementById("ex-reg").value;const p=[c&&`Crop: ${c}`,co&&`Country: ${co}`,reg&&`Region: ${reg}`].filter(Boolean);return p.length?p.join(" · "):"All MVD";}
+function exHeat(){
+  const d=exCheck();if(!d)return;const{exps,cats,ct}=d;
+  Plotly.newPlot("ex-chart",[{type:"heatmap",x:cats,y:exps,z:exps.map(e=>cats.map(c=>ct[e][c]||0)),colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:11,color:"#E4EEF8"},hovertemplate:"Explant: %{y}<br>Trait: %{x}<br>Count: %{z}<extra></extra>"}],{...PL(`Explant × Trait — counts (${exLbl()})`),height:Math.max(320,exps.length*34+130),margin:{l:130,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);
+  document.getElementById("ex-tbl").style.display="none";const note=exNote(d);const er=document.getElementById("ex-res");if(note){er.style.display="block";er.innerHTML=note;}else{er.style.display="none";}
+  setSt(`Explant × Trait counts · ${exLbl()}`);
+}
+function exNorm(){
+  const d=exCheck();if(!d)return;const{exps,cats,ct}=d;
+  const z=exps.map(e=>{const tot=cats.reduce((s,c)=>s+(ct[e][c]||0),0);return cats.map(c=>tot?(ct[e][c]||0)/tot*100:0);});
+  Plotly.newPlot("ex-chart",[{type:"heatmap",x:cats,y:exps,z,colorscale:[[0,"#122336"],[.5,"#6B3FA0"],[1,"#00A19A"]],texttemplate:"%{z:.0f}%",textfont:{size:11,color:"#E4EEF8"},hovertemplate:"Explant: %{y}<br>Trait: %{x}<br>%{z:.1f}% of this explant<extra></extra>"}],{...PL(`Explant × Trait — row-normalised % (${exLbl()})`),height:Math.max(320,exps.length*34+130),margin:{l:130,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);
+  document.getElementById("ex-tbl").style.display="none";const note=exNote(d);const er=document.getElementById("ex-res");if(note){er.style.display="block";er.innerHTML=note;}else{er.style.display="none";}
+  setSt(`Explant × Trait row % · ${exLbl()}`);
+}
+function exChi(){
+  const d=exCheck();if(!d)return;const{exps,cats,ct}=d;
+  // drop all-zero trait columns to keep the test meaningful
+  const useCats=cats.filter(c=>exps.some(e=>ct[e][c]>0));
+  const obs=exps.map(e=>useCats.map(c=>ct[e][c]||0));
+  const rT=obs.map(r=>r.reduce((s,v)=>s+v,0));
+  const cT=useCats.map((_,j)=>obs.reduce((s,r)=>s+r[j],0));
+  const N=rT.reduce((s,v)=>s+v,0);
+  if(N<1){alert("No trait assignments to test.");return;}
+  const exp=exps.map((_,i)=>useCats.map((_,j)=>rT[i]*cT[j]/N));
+  let chi2=0,minE=Infinity;obs.forEach((r,i)=>r.forEach((o,j)=>{const e=exp[i][j];if(e<minE)minE=e;if(e>0)chi2+=(o-e)**2/e;}));
+  const dof=(exps.length-1)*(useCats.length-1);
+  const p=chiP(chi2,dof);
+  const el=document.getElementById("ex-res");el.style.display="block";
+  const cv=chiVerdict(chi2,p,dof,minE,"explant","trait");el.innerHTML=`${"─".repeat(52)}\n  Chi-Square: Treated Explant × Trait Category\n  Filter: ${exLbl()}   |   N = ${N.toLocaleString()} trait assignments\n  ${exps.length} explants × ${useCats.length} trait categories\n${"─".repeat(52)}\n${cv.pline}\n  χ² : ${chi2.toFixed(3)}     df : ${dof}     min expected : ${minE.toFixed(2)}\n${"─".repeat(52)}\n${cv.verdict}${cv.sparse}`;
+  // show the count heatmap with the stat in the title
+  Plotly.newPlot("ex-chart",[{type:"heatmap",x:useCats,y:exps,z:obs,colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#005A8E"]],texttemplate:"%{z}",textfont:{size:11,color:"#E4EEF8"}}],{...PL(`Explant × Trait  (χ²=${chi2.toFixed(2)}, p=${p.toFixed(4)})`),height:Math.max(320,exps.length*34+130),margin:{l:130,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);
+  document.getElementById("ex-tbl").style.display="none";
+  setSt(`Explant × Trait χ²=${chi2.toFixed(2)}, p=${p.toFixed(4)}, dof=${dof}`);
+}
+function exTbl(){
+  const d=exCheck();if(!d)return;const{exps,cats,ct}=d;
+  document.getElementById("ex-tbl").style.display="block";
+  document.getElementById("ex-tbl").innerHTML=tbl(exps.map(e=>{const o={Explant:e};let t=0;cats.forEach(c=>{o[c]=ct[e][c]||0;t+=o[c];});o.Total=t;return o;}),["Explant",...cats,"Total"]);
+  document.getElementById("ex-res").style.display="none";
+}
+
+// ── EXPORT ───────────────────────────────────────────────────────
+function expCSV(){if(!G.rows.length){alert("Load data first.");return;}const cols=G.cols.filter(c=>!c.startsWith("_"));const csv=[cols.join(","),...G.rows.map(r=>cols.map(c=>`"${(r[c]||"").replace(/"/g,'""')}"`).join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="mvd_processed.csv";a.click();}
+function genRep(){if(!G.rows.length){alert("Load data first.");return;}const r=G.rows,n=r.length,years=r.map(x=>x._year).filter(Boolean);const lines=["=".repeat(60),"  MVD Analysis Suite — Summary Report",`  Generated: ${new Date().toLocaleString()}`,"  Data: IAEA Mutant Variety Database (mvd.iaea.org)","=".repeat(60),"","── OVERVIEW ─────────────────────────────────────────────",`  Total varieties : ${n.toLocaleString()}`,`  Crop species    : ${[...new Set(r.map(x=>x.Crop).filter(Boolean))].length.toLocaleString()}`,`  Countries       : ${[...new Set(r.map(x=>x.Country).filter(Boolean))].length.toLocaleString()}`,`  Regions         : ${[...new Set(r.map(x=>x.Region).filter(x=>x&&x!=="Unknown"))].length}`,`  Year range      : ${years.length?Math.min(...years)+"–"+Math.max(...years):"—"}`,`  Missing year %  : ${(r.filter(x=>!x._year).length/n*100).toFixed(1)}%`,"","── TOP 10 CROPS ────────────────────────────────────────"];vc(r,"Crop",10).forEach(({key,count},i)=>lines.push(`  ${String(i+1).padStart(2,"0")}. ${key.padEnd(34)}${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── TOP 10 COUNTRIES ────────────────────────────────────");vc(r,"Country",10).forEach(({key,count},i)=>lines.push(`  ${String(i+1).padStart(2,"0")}. ${key.padEnd(34)}${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── BY REGION ────────────────────────────────────────────");vc(r,"Region",8).forEach(({key,count})=>lines.push(`  ${key.padEnd(20)}: ${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── MUTAGEN CATEGORY ────────────────────────────────────");vc(r,"Mutagen_Category",5).forEach(({key,count})=>lines.push(`  ${key.padEnd(20)}: ${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── DECADAL DISTRIBUTION ────────────────────────────────");const dec={};r.filter(x=>x._decade).forEach(x=>dec[x._decade]=(dec[x._decade]||0)+1);const mxD=Math.max(...Object.values(dec));Object.entries(dec).sort().forEach(([d,c])=>lines.push(`  ${d.padEnd(6)} ${String(c).padStart(5)}  ${"█".repeat(Math.round(c/mxD*24))}`));if(G.cols.includes("Improved_Trait")){const ts=splitT(r);const t10=Object.entries(ts.reduce((a,t)=>{a[t]=(a[t]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,10);lines.push("","── TOP 10 IMPROVED TRAITS ──────────────────────────────");t10.forEach(([k,v],i)=>lines.push(`  ${String(i+1).padStart(2,"0")}. ${k.padEnd(38)}${String(v).padStart(5)}  (${(v/ts.length*100).toFixed(1)}%)`));}lines.push("","=".repeat(60),"  Citation: IAEA Mutant Variety Database — https://mvd.iaea.org","=".repeat(60));const txt=lines.join("\n");document.getElementById("rep-box").textContent=txt;document.getElementById("rep-box").dataset.txt=txt;}
+function saveRep(){const txt=document.getElementById("rep-box").dataset.txt;if(!txt||txt.includes("Click")){genRep();setTimeout(()=>{const t=document.getElementById("rep-box").dataset.txt;if(t){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download="mvd_report.txt";a.click();}},200);return;}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));a.download="mvd_report.txt";a.click();}
+// Bundle everything generated this session into a single ZIP.
+async function exportZip(){
+  if(!G.rows.length){alert("Load data first.");return;}
+  if(typeof JSZip==="undefined"){alert("ZIP library still loading — try again in a moment.");return;}
+  const st=document.getElementById("zip-status");st.textContent="⏳ Building ZIP…";
+  try{
+    const zip=new JSZip();
+    // 1) processed CSV
+    const cols=G.cols.filter(c=>!c.startsWith("_"));
+    const csv=[cols.join(","),...G.rows.map(r=>cols.map(c=>`"${(r[c]||"").replace(/"/g,'""')}"`).join(","))].join("\n");
+    zip.file("mvd_processed_data.csv",csv);
+    // 2) summary report (generate if needed)
+    genRep();const rep=document.getElementById("rep-box").dataset.txt||"";
+    zip.file("mvd_summary_report.txt",rep);
+    // 3) a PNG of every chart rendered this session
+    const ids=Object.keys(__lastPlot);
+    const charts=zip.folder("charts");
+    let made=0;
+    for(const id of ids){
+      const el=document.getElementById(id);
+      if(!el||!el.querySelector||!el.querySelector(".plot-container"))continue; // only actually-rendered charts
+      let w=900,h=500;try{const ld=el._fullLayout;if(ld&&ld.width)w=ld.width;if(ld&&ld.height)h=ld.height;}catch(e){}
+      st.textContent=`⏳ Rendering chart ${made+1}…`;
+      try{
+        const url=await Plotly.toImage(el,{format:"png",width:Math.round(w),height:Math.round(h),scale:2});
+        const b64=url.split(",")[1];
+        charts.file(`${id}.png`,b64,{base64:true});made++;
+      }catch(e){/* skip a chart that won't render */}
+    }
+    // 4) a small manifest
+    zip.file("README.txt",`MVD Analysis Suite — export bundle\nGenerated: ${new Date().toLocaleString()}\n\nContents:\n  mvd_processed_data.csv   — full dataset with derived columns\n  mvd_summary_report.txt   — dataset summary\n  charts/                  — ${made} chart image(s) generated this session\n\nData: IAEA Mutant Variety Database (mvd.iaea.org)\n`);
+    const blob=await zip.generateAsync({type:"blob"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download=`mvd_export_${new Date().toISOString().slice(0,10)}.zip`;a.click();
+    st.textContent=`✅ ZIP ready — ${made} chart(s) + CSV + report.${made===0?" (Generate some charts first to include them.)":""}`;
+  }catch(e){st.textContent="⚠ ZIP failed: "+e.message;}
+}
+</script>
+</body>
+</html>
