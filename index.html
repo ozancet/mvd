@@ -1073,7 +1073,7 @@ function processData(raw,rawCols){
   // was obtained (r._provenance) so nothing is a black box. An optional LLM fallback
   // could later populate the same fields, but is intentionally OFF here — every value
   // below is a literal match a user can find in the source text.
-  const DOSE=/(\d+(?:\.\d+)?)(?:\s?[-–]\s?(\d+(?:\.\d+)?))?\s?(gy|gray|kgy|krad|kr|krads|mm|mmol)\b/i;
+  const DOSE=/(\d+(?:\.\d+)?)(?:\s?[-–]\s?(\d+(?:\.\d+)?))?\s?(gy|gray|kgy|krad|krads|kr)\b/i;
   function extractDose(...texts){
     for(const t of texts){if(!t)continue;const m=DOSE.exec(t);if(m){
       let unit=m[3].toLowerCase();if(unit==="gray")unit="gy";if(unit==="kr")unit="krad";
