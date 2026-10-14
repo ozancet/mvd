@@ -134,6 +134,7 @@ tbody tr:last-child td{border-bottom:none}
 .mc .ms{margin-top:9px}.mtag{display:inline-block;padding:2px 7px;border-radius:10px;font-weight:700;background:rgba(0,90,142,.25);color:var(--accent);margin-right:3px;font-size:11px}
 
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.langsw{display:inline-flex;margin-left:10px;border:1px solid var(--border);border-radius:20px;overflow:hidden;flex-shrink:0}.langsw button{background:transparent;border:0;color:var(--muted);font:700 11.5px/1 inherit;letter-spacing:.6px;padding:6px 11px;cursor:pointer;min-height:0}.langsw button.on{background:var(--accent);color:#fff}.langsw button:not(.on):hover{color:var(--txt)}
 /* ─────────────────────────────────────────────────────────────
    MOBILE / NARROW SCREENS ONLY (≤820px). Desktop layout above is
    untouched — these rules do not apply on wide screens. Pure CSS,
@@ -207,6 +208,7 @@ tbody tr:last-child td{border-bottom:none}
   <div id="topbar">
     <span class="pt" id="ptitle">🏠 Overview &amp; Data Loading</span>
     <span class="badge" id="badge">No data loaded</span>
+    <div class="langsw" id="langsw" role="group" aria-label="Language / Dil" data-noi18n><button type="button" data-l="en" class="on" onclick="setLang('en')" title="English">EN</button><button type="button" data-l="tr" onclick="setLang('tr')" title="Türkçe">TR</button></div>
   </div>
   <div id="content">
 
@@ -241,8 +243,8 @@ tbody tr:last-child td{border-bottom:none}
             <li>Click <strong>Download / Export CSV</strong> above the results table</li>
             <li>Drag the file below, or click <strong>Load Local CSV</strong></li>
           </ol>
-          <div class="cors-note"><strong style="color:var(--txt)">Why can't the button fetch directly?</strong><br>
-          Browsers block cross-origin requests (CORS policy). When deployed on a server the proxy handles this automatically. Locally, use the manual method.</div>
+          <div class="cors-note"><strong style="color:var(--txt)">Why didn't the bundled file load?</strong><br>
+          The bundled data loads automatically only when the page is opened from its web address (e.g. GitHub Pages). If you opened the file directly from your computer, use the manual method above.</div>
         </div>
         <div class="uz" id="uz"
           ondragover="event.preventDefault();this.classList.add('drag')"
@@ -594,7 +596,7 @@ plt.tight_layout(); plt.savefig(<span class="fn">"mvd_stacked.png"</span>, dpi=1
         <li><strong>Decadal Shift:</strong> gamma rays were near-exclusive before 1980; EMS and ion beams gained ground from 1990s onward</li>
         <li><strong>Crop × Mutagen Heatmap:</strong> distinct profiles per crop — rice favours gamma, barley leans to sodium azide, woody species use ion beams</li>
         <li><strong>Country × Mutagen:</strong> Japan's RIKEN ion-beam programme stands out; European programmes show strong EMS adoption</li>
-        <li><strong>Dose Distribution:</strong> histogram of recorded doses (Gy for radiation, mM for chemicals) — data quality check</li>
+        <li><strong>Dose Distribution:</strong> histogram of radiation doses (Gy) recovered from each record's text — about half of the records report one</li>
       </ul>
     </div>
     <div class="card">
@@ -677,7 +679,7 @@ plt.tight_layout(); plt.savefig(<span class="fn">"mvd_crop_mutagen.png"</span>, 
       <strong>What it does:</strong> Analyses which agronomic characteristics mutation breeding has targeted, and how priorities have shifted. <em>Reveals global and regional breeding focus in response to food security and climate pressures.</em>
       <ul>
         <li><strong>Top Traits:</strong> raw frequency after splitting multi-trait entries. Older records use free text; newer records use controlled vocabulary — some normalisation may be needed for strict comparisons</li>
-        <li><strong>Category Distribution:</strong> 7 categories — Yield · Disease Resistance · Abiotic Stress · Maturity · Quality · Plant Architecture · Pest Resistance</li>
+        <li><strong>Category Distribution:</strong> 11 categories — Yield · Disease Resistance · Abiotic Stress · Maturity · Quality · Plant Architecture · Ornamental/Colour · Pest Resistance · Fibre/Industrial · Agronomic · Other</li>
         <li><strong>Crop × Trait Heatmap:</strong> cereals concentrate on yield/architecture; oilseeds on quality/oil content; vegetables on disease resistance</li>
         <li><strong>Decade Shift:</strong> Abiotic Stress and Quality categories have grown post-2000 as climate and nutritional demands increased</li>
       </ul>
@@ -968,9 +970,9 @@ const MODS=[
   {id:"temporal",icon:"📅",title:"Temporal Analysis",desc:"Annual and decadal release trends, cumulative growth, multi-series comparison. Mann-Kendall significance test with Sen's slope.",tags:["Time series","Mann-Kendall","Sen's slope"]},
   {id:"compare",icon:"🌍",title:"Cross-Table & Compare",desc:"Cross-tabulate any two categorical variables: heatmap, stacked %, grouped bar, bubble grid. Reveals which combinations dominate or are absent.",tags:["Heatmap","Cross-tab","Bubble"]},
   {id:"mutagen",icon:"🧬",title:"Mutagen Analysis",desc:"Physical vs Chemical distribution, decadal technology shift, Crop × Mutagen and Country × Mutagen heatmaps, dose histogram.",tags:["Physical/Chemical","Ion beam","Dose"]},
-  {id:"trait",icon:"🏷️",title:"Trait Analysis",desc:"Top improved traits, 7-category distribution, Crop × Trait heatmap, decade shift (Abiotic Stress rising post-2000), region comparison.",tags:["Breeding target","Category","Decade shift"]},
+  {id:"trait",icon:"🏷️",title:"Trait Analysis",desc:"Top improved traits, category distribution with a Crop Group filter, Crop × Trait heatmap, decade shift, and a Development × Trait view.",tags:["Breeding target","Category","Decade shift"]},
   {id:"explant",icon:"🧫",title:"Explant × Trait",desc:"Which tissue type (seed, callus, pollen…) yields which breeding outcome. Count + row-normalised % heatmaps and a Chi-Square independence test.",tags:["Explant","Normalised %","Chi-Square"]},
-  {id:"advanced",icon:"📈",title:"Advanced Statistics",desc:"Chi-Square independence test (p-value, df), Mann-Kendall with Sen's slope chart, descriptive statistics with a plain-language summary and dose histogram (dose recovered from text).",tags:["Chi-Square χ²","p-value","Box plot"]},
+  {id:"advanced",icon:"📈",title:"Advanced Statistics",desc:"Chi-Square independence test (p-value, df), Mann-Kendall with Sen's slope chart, descriptive statistics with a plain-language summary and dose histogram (dose recovered from text).",tags:["Chi-Square χ²","p-value","Dose summary"]},
   {id:"export",icon:"💾",title:"Export & Report",desc:"Download processed CSV with derived columns, auto-generate plain-text summary report, export any chart as PNG (300 dpi) or SVG.",tags:["CSV","PNG / SVG","Report"]},
 ];
 const REGIONS={
@@ -1172,6 +1174,720 @@ function dlC(id,n,f){const el=document.getElementById(id);if(!el)return;
   let w=el.clientWidth||el.offsetWidth||900, h=el.clientHeight||el.offsetHeight||500;
   try{const ld=el._fullLayout;if(ld&&ld.width)w=ld.width;if(ld&&ld.height)h=ld.height;}catch(e){}
   Plotly.downloadImage(el,{format:f,filename:"mvd_"+n,width:Math.round(w),height:Math.round(h),scale:f==="png"?2:1});}
+// ── LANGUAGE LAYER (EN / TR) ──────────────────────────────────────
+// English is the source text in the markup and the code. When Turkish is
+// selected, this layer swaps what the user sees — interface text, result
+// sentences, chart titles/axes/categories, alerts and the summary report —
+// and restores the original English when switched back. Data values from the
+// IAEA export (crop, country, variety and institution names, free-text traits)
+// are never translated, so filters and exports stay identical in both languages.
+const I18N={lang:"en",obs:null,touched:new Set()};
+const TR_UI={
+", not when mutations were induced.": ", ne zaman mutasyon oluşturulduğunu değil.",
+"9 Analysis Modules": "9 Analiz Modülü",
+"<span class=\"dtag\">DOSE FROM TEXT</span> The MVD export has no dedicated dose column. Where a dose appears in a variety's description (e.g. <em>\"gamma rays (200 Gy)\"</em>), the suite extracts it into <strong>Mutagen Dose</strong> — recovered for roughly <strong>half</strong> of all records, almost always in <strong>Gy</strong>. Treat it as an indicative distribution of reported doses, not a complete census. Year of Release is fully numeric.": "<span class=\"dtag\">METİNDEN DOZ</span> MVD dışa aktarımında ayrı bir doz kolonu yoktur. Bir çeşidin açıklamasında doz yazılıysa (ör. <em>\"gamma rays (200 Gy)\"</em>) uygulama bu değeri <strong>Mutajen Dozu</strong> alanına çıkarır — kayıtların yaklaşık <strong>yarısında</strong> bulunur, neredeyse tamamı <strong>Gy</strong> cinsindendir. Bunu raporlanan dozların gösterge niteliğinde bir dağılımı olarak okuyun, eksiksiz bir sayım olarak değil. Tescil yılı tamamen sayısaldır.",
+"<span class=\"ic\">🌍</span>Cross-Table &amp; Compare": "<span class=\"ic\">🌍</span>Çapraz Tablo &amp; Karşılaştırma",
+"<span class=\"ic\">🌿</span>Crop Explorer": "<span class=\"ic\">🌿</span>Ürün Gezgini",
+"<span class=\"ic\">🏠</span>Overview &amp; Data": "<span class=\"ic\">🏠</span>Genel Bakış &amp; Veri",
+"<span class=\"ic\">🏷️</span>Trait Analysis": "<span class=\"ic\">🏷️</span>Özellik Analizi",
+"<span class=\"ic\">💾</span>Export &amp; Report": "<span class=\"ic\">💾</span>Dışa Aktarım &amp; Rapor",
+"<span class=\"ic\">📅</span>Temporal Analysis": "<span class=\"ic\">📅</span>Zamansal Analiz",
+"<span class=\"ic\">📈</span>Advanced Statistics": "<span class=\"ic\">📈</span>İleri İstatistik",
+"<span class=\"ic\">📊</span>Dataset Overview": "<span class=\"ic\">📊</span>Veri Seti Özeti",
+"<span class=\"ic\">🧫</span>Explant × Trait": "<span class=\"ic\">🧫</span>Eksplant × Özellik",
+"<span class=\"ic\">🧬</span>Mutagen Analysis": "<span class=\"ic\">🧬</span>Mutajen Analizi",
+"<strong style=\"color:var(--txt)\">Why didn't the bundled file load?</strong><br> The bundled data loads automatically only when the page is opened from its web address (e.g. GitHub Pages). If you opened the file directly from your computer, use the manual method above.": "<strong style=\"color:var(--txt)\">Paketle gelen dosya neden yüklenmedi?</strong><br> Paketle gelen veri yalnızca sayfa web adresinden (ör. GitHub Pages) açıldığında otomatik yüklenir. Dosyayı doğrudan bilgisayarınızdan açtıysanız yukarıdaki elle yükleme yöntemini kullanın.",
+"<strong>Annual + Cumulative:</strong> dual-axis showing rate and total growth side by side": "<strong>Yıllık + Kümülatif:</strong> artış hızını ve toplam büyümeyi yan yana gösteren çift eksenli grafik",
+"<strong>Annual / Decadal:</strong> bar charts per year or decade — peaks often correspond to major breeding investments or data submission batches": "<strong>Yıllık / On yıllık:</strong> yıl veya on yıl başına çubuk grafikler — tepeler çoğunlukla büyük ıslah yatırımlarına ya da toplu veri girişlerine karşılık gelir",
+"<strong>Botanical search:</strong> type \"lens\" to find Lentil (<em>Lens culinaris</em>) — searches both Crop and Species columns, with typo tolerance": "<strong>Botanik arama:</strong> \"lens\" yazınca Lentil (mercimek, <em>Lens culinaris</em>) bulunur — hem Ürün hem Tür kolonlarında, yazım hatasına toleranslı arar",
+"<strong>Bubble Grid:</strong> every row × column combination as a sized, colour-coded bubble — the most readable way to spot dominant and rare pairings at a glance": "<strong>Kabarcık Izgarası:</strong> her satır × sütun birleşimi, boyutu ve rengi sayıya göre ölçeklenen bir kabarcık olarak gösterilir — baskın ve nadir eşleşmeleri bir bakışta görmenin en okunur yolu",
+"<strong>Category Distribution:</strong> 11 categories — Yield · Disease Resistance · Abiotic Stress · Maturity · Quality · Plant Architecture · Ornamental/Colour · Pest Resistance · Fibre/Industrial · Agronomic · Other": "<strong>Kategori Dağılımı:</strong> 11 kategori — Verim · Hastalık Direnci · Abiyotik Stres · Olgunlaşma · Kalite · Bitki Mimarisi · Süs/Renk · Zararlı Direnci · Lif/Endüstriyel · Agronomik · Diğer",
+"<strong>Chart downloads:</strong> every chart has ⬇ PNG (2× scale ≈ 300 dpi) and ⬇ SVG (vector, infinitely scalable) buttons — use SVG for journal figures": "<strong>Grafik indirme:</strong> her grafikte ⬇ PNG (2× ölçek ≈ 300 dpi) ve ⬇ SVG (vektör, kayıpsız ölçeklenir) düğmeleri vardır — dergi şekilleri için SVG kullanın",
+"<strong>Chart types:</strong> Horizontal Bar (best for ranked lists), Vertical Bar, Donut/Pie (proportions), Treemap (hierarchical)": "<strong>Grafik tipleri:</strong> Yatay Çubuk (sıralı listeler için en iyisi), Dikey Çubuk, Halka/Pasta (oranlar), Ağaç Haritası (hiyerarşik)",
+"<strong>Chi-Square (χ²) Test:</strong> \"Are two categorical variables statistically associated?\" e.g. Is mutagen choice independent of crop group? Reports χ² statistic, df, p-value. Warning shown when expected cells &lt;5 (merge rare categories)": "<strong>Ki-Kare (χ²) Testi:</strong> \"İki kategorik değişken istatistiksel olarak ilişkili mi?\" ör. mutajen seçimi ürün grubundan bağımsız mı? χ² istatistiği, serbestlik derecesi ve p-değeri raporlanır. Beklenen hücre değerleri &lt;5 olduğunda uyarı gösterilir (nadir kategorileri birleştirin)",
+"<strong>Chi-Square test:</strong> are explant and trait independent? Low p ⇒ tissue choice and breeding outcome are associated": "<strong>Ki-Kare testi:</strong> eksplant ve özellik birbirinden bağımsız mı? Düşük p ⇒ doku seçimi ile ıslah sonucu ilişkilidir",
+"<strong>Column selector:</strong> Crop, Country, Region, Mutagen type, Crop Group, Decade, Explant type, or Institution": "<strong>Kolon seçici:</strong> Ürün, Ülke, Bölge, Mutajen tipi, Ürün Grubu, On yıl, Eksplant tipi veya Kurum",
+"<strong>Complete ZIP bundle:</strong> one click packages the filtered/processed CSV, the summary report, and a PNG of every chart you've generated this session — ready to archive or share": "<strong>Eksiksiz ZIP paketi:</strong> tek tıkla filtrelenmiş/işlenmiş CSV, özet rapor ve bu oturumda ürettiğiniz her grafiğin PNG hâli paketlenir — arşivlemeye veya paylaşmaya hazır",
+"<strong>Count heatmap:</strong> raw varieties per Explant × Trait Category combination": "<strong>Sayı ısı haritası:</strong> her Eksplant × Özellik Kategorisi birleşimi için ham çeşit sayısı",
+"<strong>Country + Region filters:</strong> restrict counts to a geographic subset before tallying — e.g. \"top crops in Asia only\"": "<strong>Ülke + Bölge filtreleri:</strong> saymadan önce sonuçları coğrafi bir alt kümeyle sınırlar — ör. \"yalnızca Asya'daki en çok ıslah edilen ürünler\"",
+"<strong>Country × Mutagen:</strong> Japan's RIKEN ion-beam programme stands out; European programmes show strong EMS adoption": "<strong>Ülke × Mutajen:</strong> Japonya'daki RIKEN iyon demeti programı öne çıkar; Avrupa programlarında EMS kullanımı belirgindir",
+"<strong>Crop × Mutagen Heatmap:</strong> distinct profiles per crop — rice favours gamma, barley leans to sodium azide, woody species use ion beams": "<strong>Ürün × Mutajen Isı Haritası:</strong> her ürünün kendine özgü profili vardır — çeltik gama ışınına, arpa sodyum azide yönelir, odunsu türlerde iyon demeti kullanılır",
+"<strong>Crop × Trait Heatmap:</strong> cereals concentrate on yield/architecture; oilseeds on quality/oil content; vegetables on disease resistance": "<strong>Ürün × Özellik Isı Haritası:</strong> tahıllar verim/bitki mimarisi üzerinde yoğunlaşır; yağlı tohumlar kalite/yağ içeriği; sebzeler hastalık direnci",
+"<strong>Decadal Shift:</strong> gamma rays were near-exclusive before 1980; EMS and ion beams gained ground from 1990s onward": "<strong>On Yıllık Değişim:</strong> 1980 öncesinde gama ışınları neredeyse tek yöntemdi; EMS ve iyon demetleri 1990'lardan itibaren yaygınlaştı",
+"<strong>Decade Shift:</strong> Abiotic Stress and Quality categories have grown post-2000 as climate and nutritional demands increased": "<strong>On Yıllık Değişim:</strong> iklim ve beslenme taleplerinin artmasıyla Abiyotik Stres ve Kalite kategorileri 2000 sonrasında büyüdü",
+"<strong>Descriptive Stats (shown first):</strong> a plain-language summary and histogram for Year of Release, or for <strong>Mutagen Dose recovered from text</strong> (≈half the records, mostly Gy) — the single most useful enriched field for planning a treatment": "<strong>Tanımlayıcı İstatistik (ilk sırada):</strong> Tescil Yılı veya <strong>metinden çıkarılan Mutajen Dozu</strong> için sade dilde bir özet ve histogram (kayıtların ≈yarısı, çoğunlukla Gy) — bir uygulama planlarken en yararlı zenginleştirilmiş alan",
+"<strong>Distribution:</strong> Physical (gamma, X-ray, neutron, ion beam) vs Chemical (EMS, sodium azide…) proportions": "<strong>Dağılım:</strong> Fiziksel (gama, X-ışını, nötron, iyon demeti) ve Kimyasal (EMS, sodyum azid…) mutajen oranları",
+"<strong>Dose Distribution:</strong> histogram of radiation doses (Gy) recovered from each record's text — about half of the records report one": "<strong>Doz Dağılımı:</strong> her kaydın metninden çıkarılan radyasyon dozlarının (Gy) histogramı — kayıtların yaklaşık yarısı bir doz bildirir",
+"<strong>Filters:</strong> narrow to a crop / species / region before testing": "<strong>Filtreler:</strong> testten önce bir ürün / tür / bölgeye daraltın",
+"<strong>Frequency table:</strong> count, %, cumulative % — copy-paste ready for publication methods sections": "<strong>Frekans tablosu:</strong> sayı, %, kümülatif % — yayınların yöntem bölümlerine kopyalanmaya hazır",
+"<strong>Grouped Bar:</strong> side-by-side absolute counts — use when raw programme size matters": "<strong>Gruplanmış Çubuk:</strong> yan yana mutlak sayılar — programların ham büyüklüğü önemli olduğunda kullanın",
+"<strong>Heatmap:</strong> colour-coded count matrix — immediately shows e.g. Japan dominates Rice × Gamma rays, or EMS is nearly exclusive to Europe": "<strong>Isı haritası:</strong> renk kodlu sayı matrisi — ör. Çeltik × Gama ışınlarında Japonya'nın baskınlığını ya da EMS'nin neredeyse yalnızca Avrupa'da kullanıldığını hemen gösterir",
+"<strong>Mann-Kendall (Detailed):</strong> filterable, year-bounded. Returns Kendall's τ, p-value, Sen's slope, and a dual-axis trend chart with slope line": "<strong>Mann-Kendall (Ayrıntılı):</strong> filtrelenebilir, yıl aralığı sınırlanabilir. Kendall τ, p-değeri, Sen eğimi ve eğim çizgili çift eksenli trend grafiği verir",
+"<strong>Mann-Kendall test:</strong> non-parametric, no normality assumption — suited for count data. Returns Kendall's τ, p-value, and Sen's slope (varieties/year)": "<strong>Mann-Kendall testi:</strong> parametrik değildir, normallik varsayımı gerektirmez — sayım verisi için uygundur. Kendall τ, p-değeri ve Sen eğimini (çeşit/yıl) verir",
+"<strong>Multi-Series:</strong> overlay categories on one time axis (e.g. Physical vs Chemical mutagen use over decades)": "<strong>Çoklu Seri:</strong> kategorileri tek bir zaman ekseninde üst üste gösterir (ör. on yıllar boyunca Fiziksel ve Kimyasal mutajen kullanımı)",
+"<strong>Processed CSV:</strong> full dataset enriched with derived columns (Region, Mutagen_Category, Crop_Group, Decade) — ready for further analysis in Python, R or Excel": "<strong>İşlenmiş CSV:</strong> türetilmiş kolonlarla (Bölge, Mutajen kategorisi, Ürün grubu, On yıl) zenginleştirilmiş tam veri seti — Python, R veya Excel'de ileri analize hazır",
+"<strong>Row-normalised %:</strong> within each explant, what share of varieties target each trait — removes the dominance of common explants like seed": "<strong>Satıra göre normalize %:</strong> her eksplant içinde çeşitlerin hangi oranının hangi özelliği hedeflediği — tohum gibi yaygın eksplantların baskınlığını ortadan kaldırır",
+"<strong>Sections:</strong> release timeline · country spread · mutagen mix · trait categories · explant types · top institutions · this crop's Explant × Trait map": "<strong>Bölümler:</strong> tescil zaman çizelgesi · ülke dağılımı · mutajen karışımı · özellik kategorileri · eksplant tipleri · öne çıkan kurumlar · bu ürünün Eksplant × Özellik haritası",
+"<strong>Stacked Bar (%):</strong> normalised to 100% — compare composition regardless of absolute programme size": "<strong>Yığılmış Çubuk (%):</strong> %100'e normalize edilir — programların mutlak büyüklüğünden bağımsız olarak bileşimi karşılaştırın",
+"<strong>Summary Report:</strong> auto-generated plain-text — top crops, countries, regions, decadal distribution, top traits — paste-ready for a methods/results section": "<strong>Özet Rapor:</strong> otomatik üretilen düz metin — öne çıkan ürünler, ülkeler, bölgeler, on yıllık dağılım, öne çıkan özellikler — yöntem/bulgular bölümüne yapıştırmaya hazır",
+"<strong>Table:</strong> raw cross-tabulation with row totals for export": "<strong>Tablo:</strong> dışa aktarım için satır toplamlı ham çapraz tablo",
+"<strong>Top Traits:</strong> raw frequency after splitting multi-trait entries. Older records use free text; newer records use controlled vocabulary — some normalisation may be needed for strict comparisons": "<strong>Öne Çıkan Özellikler:</strong> çok özellikli kayıtlar ayrıştırıldıktan sonraki ham frekans. Eski kayıtlarda serbest metin, yenilerinde kontrollü sözlük kullanılır — sıkı karşılaştırmalar için bir miktar normalizasyon gerekebilir",
+"<strong>Typical finding:</strong> Pareto pattern — top 3–5 categories account for 60–80% of all varieties": "<strong>Tipik bulgu:</strong> Pareto deseni — ilk 3–5 kategori tüm çeşitlerin %60–80'ini oluşturur",
+"<strong>Use it for:</strong> deciding which mutagen/explant combinations are already well-explored for a target species vs. open ground": "<strong>Ne işe yarar:</strong> hedef tür için hangi mutajen/eksplant birleşimlerinin zaten iyi çalışıldığına, hangilerinin henüz boş alan olduğuna karar vermek",
+"A statistical analysis platform for the <strong style=\"color:#fff\">IAEA Mutant Variety Database (MVD)</strong> — the world's most comprehensive record of officially released mutant crop varieties developed through induced mutagenesis.": "<strong style=\"color:#fff\">IAEA Mutant Çeşit Veritabanı (MVD)</strong> için istatistiksel analiz platformu — indüklenmiş mutagenezle geliştirilip resmî olarak tescil edilmiş mutant bitki çeşitlerinin dünyadaki en kapsamlı kaydı.",
+"Abiotic Stress": "Abiyotik Stres",
+"Advanced Statistics": "İleri İstatistik",
+"Africa": "Afrika",
+"Agronomic": "Agronomik",
+"All countries — type to filter…": "Tüm ülkeler — filtrelemek için yazın…",
+"All data": "Tüm veri",
+"All groups": "Tüm gruplar",
+"All regions": "Tüm bölgeler",
+"Analyse global trends, compare programmes, test statistical hypotheses, and export publication-quality charts — no installation needed.": "Küresel eğilimleri inceleyin, programları karşılaştırın, istatistiksel hipotezleri test edin ve yayın kalitesinde grafikleri dışa aktarın — kurulum gerekmez.",
+"Analyses which agronomic characteristics mutation breeding has targeted, and how priorities have shifted.": "Mutasyon ıslahının hangi agronomik özellikleri hedeflediğini ve önceliklerin nasıl değiştiğini analiz eder.",
+"Analyses which mutagenic agents have been used and how mutagenesis technology has evolved.": "Hangi mutajenlerin kullanıldığını ve mutagenez teknolojisinin nasıl geliştiğini analiz eder.",
+"Analysis Platform v4": "Analiz Platformu v4",
+"Annual": "Yıllık",
+"Annual + Cumulative": "Yıllık + Kümülatif",
+"Annual and decadal release trends, cumulative growth, multi-series comparison. Mann-Kendall significance test with Sen's slope.": "Yıllık ve on yıllık tescil eğilimleri, kümülatif büyüme, çoklu seri karşılaştırması. Sen eğimiyle Mann-Kendall anlamlılık testi.",
+"Asia": "Asya",
+"Australia and the Pacific": "Avustralya ve Pasifik",
+"BREEDING TARGET": "ISLAH HEDEFİ",
+"Botanical search": "Botanik arama",
+"Breeding target": "Islah hedefi",
+"Breeding_Institution": "Islah kurumu",
+"Bubble": "Kabarcık",
+"CHI-SQUARE": "Kİ-KARE",
+"CROSS-TABULATION": "ÇAPRAZ TABLO",
+"Callus": "Kallus",
+"Category": "Kategori",
+"Cereals": "Tahıllar",
+"Chart:": "Grafik:",
+"Chi-Square": "Ki-Kare",
+"Chi-Square independence test (p-value, df), Mann-Kendall with Sen's slope chart, descriptive statistics with a plain-language summary and dose histogram (dose recovered from text).": "Ki-Kare bağımsızlık testi (p-değeri, sd), Sen eğimi grafiğiyle Mann-Kendall, sade dilde özet ve doz histogramıyla tanımlayıcı istatistik (doz metinden çıkarılır).",
+"Chi-Square results will appear here…": "Ki-Kare sonuçları burada görünecek…",
+"Chi-Square χ²": "Ki-Kare χ²",
+"Chimeric (vegetative)": "Kimerik (vejetatif)",
+"Citation:": "Atıf:",
+"Click \"Generate Summary Report\"…": "\"Özet Rapor Oluştur\" düğmesine tıklayın…",
+"Click <strong>Download / Export CSV</strong> above the results table": "Sonuç tablosunun üstündeki <strong>Download / Export CSV</strong> düğmesine tıklayın",
+"Column": "Kolon",
+"Column (X):": "Sütun (X):",
+"Column:": "Kolon:",
+"Copy": "Kopyala",
+"Count": "Sayı",
+"Countries": "Ülkeler",
+"Country": "Ülke",
+"Country:": "Ülke:",
+"Counts how many mutant varieties exist for each category value, ranks them, and visualises the distribution.": "Her kategori değeri için kaç mutant çeşit bulunduğunu sayar, sıralar ve dağılımı görselleştirir.",
+"Crop": "Ürün",
+"Crop / Species": "Ürün / Tür",
+"Crop / Species:": "Ürün / Tür:",
+"Crop Explorer": "Ürün Gezgini",
+"Crop Group": "Ürün Grubu",
+"Crop Group:": "Ürün Grubu:",
+"Crop Species": "Ürün Türü",
+"Crop:": "Ürün:",
+"Crop_Group": "Ürün grubu",
+"Cross × 1 mutant": "Melez × 1 mutant",
+"Cross × 2 mutants": "Melez × 2 mutant",
+"Cross × mutant variety": "Melez × mutant çeşit",
+"Cross-Table &amp; Compare": "Çapraz Tablo &amp; Karşılaştırma",
+"Cross-Table & Compare": "Çapraz Tablo & Karşılaştırma",
+"Cross-tab": "Çapraz tablo",
+"Cross-tabulate any two categorical variables: heatmap, stacked %, grouped bar, bubble grid. Reveals which combinations dominate or are absent.": "Herhangi iki kategorik değişkeni çapraz tablolayın: ısı haritası, yığılmış %, gruplanmış çubuk, kabarcık ızgarası. Hangi birleşimlerin baskın olduğunu veya hiç görülmediğini ortaya koyar.",
+"Cross-tabulates the treated explant (seed, callus, pollen, cutting, bulb…) against the resulting trait category.": "Muamele edilen eksplantı (tohum, kallus, polen, çelik, soğan…) ortaya çıkan özellik kategorisiyle çapraz tablolar.",
+"Cross-tabulates two categorical variables and visualises the joint distribution.": "İki kategorik değişkeni çapraz tablolar ve ortak dağılımı görselleştirir.",
+"Cum%": "Küm%",
+"DISTRIBUTION": "DAĞILIM",
+"Dashboard": "Pano",
+"Data: <a href=\"https://mvd.iaea.org\" target=\"_blank\">IAEA Mutant Variety Database (mvd.iaea.org)</a>": "Veri: <a href=\"https://mvd.iaea.org\" target=\"_blank\">IAEA Mutant Çeşit Veritabanı (mvd.iaea.org)</a>",
+"Dataset Overview": "Veri Seti Özeti",
+"Decadal": "On yıllık",
+"Decade": "On yıl",
+"Decade shift": "On yıllık değişim",
+"Development": "Geliştirme",
+"Direct development of an induced mutant": "İndüklenmiş mutantın doğrudan geliştirilmesi",
+"Direct mutant": "Doğrudan mutant",
+"Disease Resist.": "Hastalık Dir.",
+"Documents the shift from radiation-dominated early breeding toward chemical and ion-beam methods.": "Radyasyonun baskın olduğu erken ıslahtan kimyasal ve iyon demeti yöntemlerine geçişi belgeler.",
+"Donut / Pie": "Halka / Pasta",
+"Dose": "Doz",
+"Dose summary": "Doz özeti",
+"Download processed CSV with derived columns, auto-generate plain-text summary report, export any chart as PNG (300 dpi) or SVG.": "Türetilmiş kolonlarla işlenmiş CSV indirin, otomatik düz metin özet rapor oluşturun, her grafiği PNG (300 dpi) veya SVG olarak dışa aktarın.",
+"Drag &amp; drop CSV here": "CSV dosyasını buraya sürükleyin",
+"Drag & drop CSV here": "CSV dosyasını buraya sürükleyin",
+"Drag the file below, or click <strong>Load Local CSV</strong>": "Dosyayı aşağıya sürükleyin ya da <strong>Yerel CSV Yükle</strong> düğmesine tıklayın",
+"EXPORT": "DIŞA AKTARIM",
+"Europe": "Avrupa",
+"Explant": "Eksplant",
+"Explant Type": "Eksplant Tipi",
+"Explant × Trait": "Eksplant × Özellik",
+"Export &amp; Report": "Dışa Aktarım &amp; Rapor",
+"Export & Report": "Dışa Aktarım & Rapor",
+"Extracts results from the browser for publications and presentations.": "Sonuçları yayınlar ve sunumlar için tarayıcıdan dışa aktarır.",
+"FREQUENCY ANALYSIS": "FREKANS ANALİZİ",
+"FREQUENCY TABLE": "FREKANS TABLOSU",
+"Fibre": "Lif bitkileri",
+"Fibre/Industrial": "Lif/Endüstriyel",
+"Filter by:": "Filtre:",
+"Formal hypothesis testing on MVD data — moves beyond counts to answerable statistical questions with p-values and effect sizes.": "MVD verisi üzerinde biçimsel hipotez testi — sayımların ötesine geçip p-değerleri ve etki büyüklükleriyle yanıtlanabilir istatistiksel sorulara ilerler.",
+"Frequency": "Frekans",
+"Frequency tables and charts for any column — crop, country, decade, mutagen type. Programme strength and last-decade vs previous-decade momentum.": "Her kolon için frekans tabloları ve grafikler — ürün, ülke, on yıl, mutajen tipi. Program gücü ve son on yılın bir önceki on yıla göre ivmesi.",
+"Fruits": "Meyveler",
+"Gamma rays": "Gama ışınları",
+"Germinating Seeds": "Çimlenen tohumlar",
+"Go to <a href=\"https://mvd.iaea.org/search-varieties\" target=\"_blank\"><strong>mvd.iaea.org/search-varieties</strong></a>": "<a href=\"https://mvd.iaea.org/search-varieties\" target=\"_blank\"><strong>mvd.iaea.org/search-varieties</strong></a> adresine gidin",
+"HEATMAP": "ISI HARİTASI",
+"Heatmap": "Isı haritası",
+"Horizontal Bar": "Yatay Çubuk",
+"IAEA Mutant Variety Database. Retrieved [date], from https://mvd.iaea.org": "IAEA Mutant Variety Database. Erişim tarihi [tarih], https://mvd.iaea.org",
+"INFERENTIAL": "ÇIKARIMSAL",
+"Improved_Trait": "İyileştirilen özellik",
+"In vitro culture": "İn vitro kültür",
+"Industrial/Other crops": "Endüstriyel/Diğer ürünler",
+"Institution": "Kurum",
+"Intellectual Property": "Fikri mülkiyet",
+"Ion beam": "İyon demeti",
+"Key for understanding programme growth and technology adoption.": "Program büyümesini ve teknolojinin benimsenmesini anlamak için temel modül.",
+"Latin America and the Caribbean": "Latin Amerika ve Karayipler",
+"Leave all filters blank → click <strong>Search</strong>": "Tüm filtreleri boş bırakın → <strong>Search</strong> düğmesine tıklayın",
+"Legumes": "Baklagiller",
+"Local Name": "Yerel ad",
+"Local Registration Number": "Yerel tescil no",
+"MUTAGEN": "MUTAJEN",
+"MVD <span style=\"color:var(--accent)\">Suite</span>": "MVD <span style=\"color:var(--accent)\">Suite</span>",
+"Main Mutagen": "Ana mutajen",
+"Mann-Kendall": "Mann-Kendall",
+"Mann-Kendall results will appear here…": "Mann-Kendall sonuçları burada görünecek…",
+"Manual download (~30 seconds):": "Elle indirme (~30 saniye):",
+"Maturity": "Olgunlaşma",
+"Modules": "Modüller",
+"Momentum": "İvme",
+"Multi-Series": "Çoklu Seri",
+"Multi-series by:": "Çoklu seri ölçütü:",
+"Multi-trait varieties contribute to multiple category counts — percentages sum above 100%.": "Birden fazla özelliği olan çeşitler birden çok kategoriye sayılır — yüzdelerin toplamı %100'ü aşar.",
+"Mutagen": "Mutajen",
+"Mutagen Analysis": "Mutajen Analizi",
+"Mutagen Cat.": "Mutajen Kat.",
+"Mutagen Category": "Mutajen Kategorisi",
+"Mutagen Dose (Gy, from text)": "Mutajen Dozu (Gy, metinden)",
+"Mutagen Type (detail)": "Mutajen Tipi (ayrıntılı)",
+"Mutagen on F1 hybrid": "F1 melezine mutajen",
+"Mutagen on breeding material": "Islah materyaline mutajen",
+"Mutagen_Category": "Mutajen kategorisi",
+"Mutagen_Dose": "Mutajen dozu",
+"Mutagen_Type": "Mutajen tipi",
+"Mutant Variety Database<br>Statistical Analysis Tool": "Mutant Çeşit Veritabanı<br>İstatistiksel Analiz Aracı",
+"Mutant_Development": "Mutant geliştirme",
+"NON-PARAMETRIC": "PARAMETRİK OLMAYAN",
+"National Registration Number": "Ulusal tescil no",
+"No filter": "Filtre yok",
+"Non-empty": "Dolu",
+"Normalised %": "Normalize %",
+"North America": "Kuzey Amerika",
+"Note:": "Not:",
+"ONE-PAGE DASHBOARD": "TEK SAYFALIK PANO",
+"Oilseeds": "Yağlı tohumlar",
+"Ornamental/Colour": "Süs/Renk",
+"Ornamentals": "Süs bitkileri",
+"Other": "Diğer",
+"PNG / SVG": "PNG / SVG",
+"PNG / SVG Export": "PNG / SVG Dışa Aktarım",
+"Pest Resist.": "Zararlı Dir.",
+"Physical": "Fiziksel",
+"Physical vs Chemical distribution, decadal technology shift, Crop × Mutagen and Country × Mutagen heatmaps, dose histogram.": "Fiziksel ve Kimyasal dağılım, on yıllık teknoloji değişimi, Ürün × Mutajen ve Ülke × Mutajen ısı haritaları, doz histogramı.",
+"Physical/Chemical": "Fiziksel/Kimyasal",
+"Pick a single species and get a one-page dashboard: release timeline, country spread, mutagens, trait categories, explants, institutions, and that crop's Explant × Trait map.": "Tek bir tür seçin ve tek sayfalık bir pano alın: tescil zaman çizelgesi, ülke dağılımı, mutajenler, özellik kategorileri, eksplantlar, kurumlar ve o ürünün Eksplant × Özellik haritası.",
+"Pick one crop (by common or Latin name) and get its complete MVD profile on a single page.": "Bir ürün seçin (yaygın veya Latince adıyla) ve tüm MVD profilini tek sayfada görün.",
+"Plant Arch.": "Bitki Mim.",
+"Pollen grains or anther": "Polen veya anter",
+"Propagation_Mode": "Çoğaltma şekli",
+"Python Code Panels": "Python Kod Panelleri",
+"Quality": "Kalite",
+"Region": "Bölge",
+"Region &amp; Country Filters": "Bölge &amp; Ülke Filtreleri",
+"Region & Country Filters": "Bölge & Ülke Filtreleri",
+"Region filter": "Bölge filtresi",
+"Region:": "Bölge:",
+"Regions": "Bölgeler",
+"Release year lags mutagenesis by 5–15 years — this reflects": "Tescil yılı, mutagenezin 5–15 yıl gerisinden gelir — bu değer",
+"Report": "Rapor",
+"Restore the full chart after isolating bars/slices": "Çubuk/dilim ayırdıktan sonra grafiği eski hâline getir",
+"Reveals dominant, rare, and absent combinations — the most information-dense view of the MVD.": "Baskın, nadir ve hiç görülmeyen birleşimleri ortaya koyar — MVD'nin en yoğun bilgi taşıyan görünümü.",
+"Reveals global and regional breeding focus in response to food security and climate pressures.": "Gıda güvenliği ve iklim baskılarına yanıt olarak küresel ve bölgesel ıslah odağını ortaya koyar.",
+"Rooted cuttings": "Köklü çelikler",
+"Row (Y):": "Satır (Y):",
+"SINGLE SPECIES": "TEK TÜR",
+"Sample value": "Örnek değer",
+"Seed": "Tohum",
+"Seed - Self pollination": "Tohum - kendileme",
+"Sen's slope": "Sen eğimi",
+"Shows how the number of released mutant varieties has changed over time and tests whether the trend is statistically significant.": "Tescil edilen mutant çeşit sayısının zaman içinde nasıl değiştiğini gösterir ve eğilimin istatistiksel olarak anlamlı olup olmadığını test eder.",
+"Single species": "Tek tür",
+"Species": "Tür",
+"Stem cuttings": "Gövde çelikleri",
+"TECHNOLOGY SHIFT": "TEKNOLOJİ DEĞİŞİMİ",
+"TIME SERIES": "ZAMAN SERİSİ",
+"TISSUE → OUTCOME": "DOKU → SONUÇ",
+"TRAIT": "ÖZELLİK",
+"TRAIT FREQUENCY": "ÖZELLİK FREKANSI",
+"TREND TEST": "TREND TESTİ",
+"Temporal Analysis": "Zamansal Analiz",
+"Tests whether the choice of starting tissue is statistically linked to the kind of improvement obtained.": "Başlangıç dokusunun seçimiyle elde edilen iyileştirme türü arasında istatistiksel bir bağ olup olmadığını test eder.",
+"The essential first step of any MVD analysis.": "Her MVD analizinin temel ilk adımı.",
+"The fastest way to brief yourself on a species before reading the literature.": "Literatüre geçmeden önce bir tür hakkında hızlıca bilgi edinmenin en hızlı yolu.",
+"Time series": "Zaman serisi",
+"Top Country": "Öne çıkan ülke",
+"Top N:": "İlk N:",
+"Top cols:": "İlk sütunlar:",
+"Top explants:": "İlk eksplantlar:",
+"Top improved traits, category distribution with a Crop Group filter, Crop × Trait heatmap, decade shift, and a Development × Trait view.": "Öne çıkan iyileştirilmiş özellikler, Ürün Grubu filtresiyle kategori dağılımı, Ürün × Özellik ısı haritası, on yıllık değişim ve Geliştirme × Özellik görünümü.",
+"Top rows:": "İlk satırlar:",
+"Total": "Toplam",
+"Total Varieties": "Toplam Çeşit",
+"Trait": "Özellik",
+"Trait Analysis": "Özellik Analizi",
+"Treated_Explant": "Muamele edilen eksplant",
+"Treemap": "Ağaç Haritası",
+"Unique": "Benzersiz",
+"Usage_Category": "Kullanım kategorisi",
+"Value": "Değer",
+"Value:": "Değer:",
+"Variable 1:": "Değişken 1:",
+"Variable 2:": "Değişken 2:",
+"Varieties": "Çeşit sayısı",
+"Variety_Name": "Çeşit adı",
+"Vegetables": "Sebzeler",
+"Vegetative propagates": "Vejetatif üretim materyali",
+"Vertical Bar": "Dikey Çubuk",
+"View:": "Görünüm:",
+"What it does:": "Ne yapar:",
+"Which tissue type (seed, callus, pollen…) yields which breeding outcome. Count + row-normalised % heatmaps and a Chi-Square independence test.": "Hangi doku tipinin (tohum, kallus, polen…) hangi ıslah sonucunu verdiği. Sayı + satıra göre normalize % ısı haritaları ve Ki-Kare bağımsızlık testi.",
+"Year Range": "Yıl Aralığı",
+"Year from:": "Başlangıç yılı:",
+"Year of Release": "Tescil Yılı",
+"Year:": "Yıl:",
+"Year_of_Release": "Tescil yılı",
+"Yield": "Verim",
+"e.g. Rice, Lens, Hordeum…": "ör. Rice, Lens, Hordeum…",
+"e.g. Rice, Oryza": "ör. Rice, Oryza",
+"e.g. rice": "ör. rice",
+"e.g. wheat": "ör. wheat",
+"optional": "isteğe bağlı",
+"or click to browse · UTF-8, Latin-1, CP-1252 supported": "veya göz atmak için tıklayın · UTF-8, Latin-1, CP-1252 desteklenir",
+"p-value": "p-değeri",
+"pandas str.split + stack": "pandas str.split + stack",
+"release dynamics": "tescil dinamiğini yansıtır",
+"str.contains on both Crop and Species mirrors the botanical search box.": "Hem Crop hem Species kolonunda str.contains kullanılması botanik arama kutusunun karşılığıdır.",
+"to:": "bitiş:",
+"χ² Chi-Square Independence Test": "χ² Ki-Kare Bağımsızlık Testi",
+"— Builds contingency table from two categorical columns; .div() normalises to %": "— İki kategorik kolondan çapraz tablo oluşturur; .div() yüzdeye çevirir",
+"— Builds the input contingency table from two categorical columns": "— İki kategorik kolondan test için girdi çapraz tablosunu oluşturur",
+"— Colour-coded matrix with cell annotations; built on matplotlib for styling": "— Hücre etiketli renk kodlu matris; görünüm için matplotlib üzerine kuruludur",
+"— Computes χ² statistic, p-value, degrees of freedom, and expected cell counts from a 2D contingency table": "— 2B çapraz tablodan χ² istatistiğini, p-değerini, serbestlik derecesini ve beklenen hücre değerlerini hesaplar",
+"— Crop × trait-category matrix with count annotations": "— Sayı etiketli ürün × özellik kategorisi matrisi",
+"— Explodes multi-value cells (e.g. \"Yield; Disease resistance\") into individual rows for counting": "— Çok değerli hücreleri (ör. \"Yield; Disease resistance\") sayım için ayrı satırlara açar",
+"— Non-parametric monotonic trend test. Returns trend direction, Kendall's τ, p-value, Sen's slope. No normality assumption — ideal for count data": "— Parametrik olmayan monoton trend testi. Trend yönü, Kendall τ, p-değeri ve Sen eğimini verir. Normallik varsayımı yoktur — sayım verisi için idealdir",
+"— Pie/donut (wedgeprops for hole), stacked bar; axis-level and figure-level customisation": "— Pasta/halka (delik için wedgeprops), yığılmış çubuk; eksen ve şekil düzeyinde özelleştirme",
+"— Pie/donut chart, stacked bar, horizontal bar export": "— Pasta/halka grafik, yığılmış çubuk, yatay çubuk dışa aktarımı",
+"— Row-wise categorisation function; str.contains() for keyword matching": "— Satır bazında kategorize etme fonksiyonu; anahtar kelime eşleştirme için str.contains()",
+"— Row-wise trait categorisation using keyword lists": "— Anahtar kelime listeleriyle satır bazında özellik kategorizasyonu",
+"— Stacked/grouped bar charts, multi-subplot layout, figure export": "— Yığılmış/gruplanmış çubuk grafikler, çok panelli yerleşim, şekil dışa aktarımı",
+"— Statistical heatmap with auto colour scaling and cell-level annotation (annot=True, fmt=\"d\")": "— Otomatik renk ölçekli ve hücre etiketli istatistiksel ısı haritası (annot=True, fmt=\"d\")",
+"— annotated heatmap of the normalised table.": "— normalize edilmiş tablonun etiketli ısı haritası.",
+"— bar, line and dual-axis (twinx) charts; multi-panel subplots": "— çubuk, çizgi ve çift eksenli (twinx) grafikler; çok panelli alt grafikler",
+"— bar/horizontal bar/pie/donut charts; tight_layout, savefig for publication export": "— çubuk/yatay çubuk/pasta/halka grafikler; yayın için tight_layout ve savefig",
+"— builds the Explant × Trait contingency table.": "— Eksplant × Özellik çapraz tablosunu oluşturur.",
+"— filtering and value_counts for one species.": "— tek bir tür için filtreleme ve value_counts.",
+"— groupby(year/decade), cumsum() for running totals, to_numeric() for type conversion": "— yıl/on yıl için groupby(), kümülatif toplam için cumsum(), tür dönüşümü için to_numeric()",
+"— quick timeline / bar charts.": "— hızlı zaman çizelgesi / çubuk grafikler.",
+"— value_counts(), groupby(), filtering, crosstab; the core data manipulation library": "— value_counts(), groupby(), filtreleme, crosstab; temel veri işleme kütüphanesi",
+"— χ², p-value, degrees of freedom, expected counts.": "— χ², p-değeri, serbestlik derecesi, beklenen değerler.",
+"↺ Reset view": "↺ Görünümü sıfırla",
+"⌨ Python equivalent — Chi-Square Test": "⌨ Python karşılığı — Ki-Kare Testi",
+"⌨ Python equivalent — Cross-tabulation &amp; Heatmap": "⌨ Python karşılığı — Çapraz Tablo &amp; Isı Haritası",
+"⌨ Python equivalent — Cross-tabulation & Heatmap": "⌨ Python karşılığı — Çapraz Tablo & Isı Haritası",
+"⌨ Python equivalent — Frequency Analysis": "⌨ Python karşılığı — Frekans Analizi",
+"⌨ Python equivalent — Mutagen Analysis": "⌨ Python karşılığı — Mutajen Analizi",
+"⌨ Python equivalent — Temporal Analysis + Mann-Kendall": "⌨ Python karşılığı — Zamansal Analiz + Mann-Kendall",
+"⌨ Python equivalent — Trait Analysis": "⌨ Python karşılığı — Özellik Analizi",
+"⏳ Loading bundled MVD_DB.csv…": "⏳ Paketle gelen MVD_DB.csv yükleniyor…",
+"▶ Analyse": "▶ Analiz Et",
+"▶ Build Dashboard": "▶ Panoyu Oluştur",
+"▶ Plot": "▶ Çiz",
+"▶ Run Test": "▶ Testi Çalıştır",
+"▶ Summary": "▶ Özet",
+"✅ Found bundled file — parsing…": "✅ Paketle gelen dosya bulundu — ayrıştırılıyor…",
+"⬇ PNG": "⬇ PNG",
+"⬇ SVG": "⬇ SVG",
+"🌍 Country Compare": "🌍 Ülke Karşılaştırması",
+"🌍 Cross-Table &amp; Compare": "🌍 Çapraz Tablo &amp; Karşılaştırma",
+"🌍 Cross-Table & Compare": "🌍 Çapraz Tablo & Karşılaştırma",
+"🌍 Cross-Tabulation &amp; Comparative Analysis": "🌍 Çapraz Tablo &amp; Karşılaştırmalı Analiz",
+"🌍 Cross-Tabulation & Comparative Analysis": "🌍 Çapraz Tablo & Karşılaştırmalı Analiz",
+"🌍 Top Countries": "🌍 Öne Çıkan Ülkeler",
+"🌐 mvd.iaea.org": "🌐 mvd.iaea.org",
+"🌿 Choose a Species": "🌿 Bir Tür Seçin",
+"🌿 Crop Explorer": "🌿 Ürün Gezgini",
+"🍩 Categories": "🍩 Kategoriler",
+"🍩 Distribution": "🍩 Dağılım",
+"🏛️ Top Institutions / Registration Agencies": "🏛️ Öne Çıkan Kurumlar / Tescil Kuruluşları",
+"🏠 Overview &amp; Data Loading": "🏠 Genel Bakış &amp; Veri Yükleme",
+"🏠 Overview & Data Loading": "🏠 Genel Bakış & Veri Yükleme",
+"🏷️ Trait (Improved Characteristic) Analysis": "🏷️ Özellik (İyileştirilen Karakter) Analizi",
+"🏷️ Trait Analysis": "🏷️ Özellik Analizi",
+"🏷️ Trait Categories": "🏷️ Özellik Kategorileri",
+"🐍 Python equivalent — Explant × Trait + Chi-Square": "🐍 Python karşılığı — Eksplant × Özellik + Ki-Kare",
+"🐍 Python equivalent — single-crop profile": "🐍 Python karşılığı — tek ürün profili",
+"💾 Export &amp; Report": "💾 Dışa Aktarım &amp; Rapor",
+"💾 Export & Report": "💾 Dışa Aktarım & Rapor",
+"💾 Save Report (.txt)": "💾 Raporu Kaydet (.txt)",
+"📁 Load Local CSV": "📁 Yerel CSV Yükle",
+"📅 Decade Shift": "📅 On Yıllık Değişim",
+"📅 Release Timeline": "📅 Tescil Zaman Çizelgesi",
+"📅 Temporal Analysis": "📅 Zamansal Analiz",
+"📅 Temporal Trend Analysis": "📅 Zamansal Eğilim Analizi",
+"📈 Advanced Statistics": "📈 İleri İstatistik",
+"📈 Decadal Shift": "📈 On Yıllık Değişim",
+"📉 Mann-Kendall": "📉 Mann-Kendall",
+"📉 Mann-Kendall Trend Test (Detailed)": "📉 Mann-Kendall Trend Testi (Ayrıntılı)",
+"📊 Dataset Overview": "📊 Veri Seti Özeti",
+"📊 Dose Histogram": "📊 Doz Histogramı",
+"📊 Frequency &amp; Distribution Analysis": "📊 Frekans &amp; Dağılım Analizi",
+"📊 Frequency & Distribution Analysis": "📊 Frekans & Dağılım Analizi",
+"📊 Grouped Bar": "📊 Gruplanmış Çubuk",
+"📊 Histogram": "📊 Histogram",
+"📊 Row-Normalised %": "📊 Satıra Göre Normalize %",
+"📊 Stacked Bar (%)": "📊 Yığılmış Çubuk (%)",
+"📊 Top Traits": "📊 Öne Çıkan Özellikler",
+"📋 Generate Summary Report": "📋 Özet Rapor Oluştur",
+"📐 Column Info &amp; Data Quality": "📐 Kolon Bilgisi &amp; Veri Kalitesi",
+"📐 Column Info & Data Quality": "📐 Kolon Bilgisi & Veri Kalitesi",
+"📖 MVD Documentation": "📖 MVD Belgeleri",
+"📥 Load MVD Data": "📥 MVD Verisini Yükle",
+"📥 Processed CSV": "📥 İşlenmiş CSV",
+"📦 Load Bundled MVD Data": "📦 Paketle Gelen MVD Verisini Yükle",
+"🔢 Descriptive Statistics — Numeric Columns": "🔢 Tanımlayıcı İstatistik — Sayısal Kolonlar",
+"🔥 Count Heatmap": "🔥 Sayı Isı Haritası",
+"🔥 Crop × Mutagen": "🔥 Ürün × Mutajen",
+"🔥 Crop × Trait": "🔥 Ürün × Özellik",
+"🔥 Heatmap": "🔥 Isı Haritası",
+"🔬 Explant × Trait Category (this crop)": "🔬 Eksplant × Özellik Kategorisi (bu ürün)",
+"🗂 Table": "🗂 Tablo",
+"🗂️ What Each Module Does": "🗂️ Modüller Ne Yapar",
+"🗜️ Download Everything (ZIP)": "🗜️ Hepsini İndir (ZIP)",
+"🧪 Demo Data": "🧪 Demo Veri",
+"🧫 Explant × Trait": "🧫 Eksplant × Özellik",
+"🧫 Explant × Trait Category": "🧫 Eksplant × Özellik Kategorisi",
+"🧫 Treated Explants": "🧫 Muamele Edilen Eksplantlar",
+"🧬 Development × Trait": "🧬 Geliştirme × Özellik",
+"🧬 Mutagen Analysis": "🧬 Mutajen Analizi",
+"🧬 Mutagen Mix": "🧬 Mutajen Karışımı",
+"🧮 Chi-Square Test": "🧮 Ki-Kare Testi",
+"🫧 Bubble Grid": "🫧 Kabarcık Izgarası",
+"No data loaded": "Veri yüklenmedi",
+"MVD Analysis Suite · Data: IAEA Mutant Variety Database (mvd.iaea.org)": "MVD Analysis Suite · Veri: IAEA Mutant Variety Database (mvd.iaea.org)",
+"Copied!": "Kopyalandı!",
+"Please load data first (Overview tab).": "Lütfen önce veriyi yükleyin (Genel Bakış sekmesi).",
+"Load data first.": "Önce veriyi yükleyin.",
+"No data.": "Veri yok.",
+"No year data.": "Yıl verisi yok.",
+"Need ≥4 years of data for a Mann-Kendall test.": "Mann-Kendall testi için en az 4 yıllık veri gerekir.",
+"⚠ Need at least 4 years.": "⚠ En az 4 yıl gerekli.",
+"No rows match the current filters.": "Mevcut filtrelerle eşleşen kayıt yok.",
+"No trait assignments to test.": "Test edilecek özellik ataması yok.",
+"Type a crop or species name first.": "Önce bir ürün veya tür adı yazın.",
+"'Improved_Trait' column not found.": "'İyileştirilen özellik' kolonu bulunamadı.",
+"'Improved_Trait' column not found in this dataset.": "Bu veri setinde 'İyileştirilen özellik' kolonu yok.",
+"'Treated_Explant' column not found in this dataset.": "Bu veri setinde 'Muamele edilen eksplant' kolonu yok.",
+"No rows with both development type and trait under the current filters.": "Mevcut filtrelerde hem geliştirme tipi hem özellik bilgisi olan kayıt yok.",
+"This dataset has no 'MutantDevelopmentType' column — the Development × Trait view needs it (present in the official IAEA MVD export).": "Bu veri setinde 'MutantDevelopmentType' kolonu yok — Geliştirme × Özellik görünümü bu kolona ihtiyaç duyar (resmî IAEA MVD dışa aktarımında bulunur).",
+"No dose values were found in the descriptions for this selection. Dose is extracted from text and is present for roughly half of records.": "Bu seçim için açıklamalarda doz değeri bulunamadı. Doz metinden çıkarılır ve kayıtların yaklaşık yarısında bulunur.",
+"No Gy dose values were found in the descriptions for this selection.": "Bu seçim için açıklamalarda Gy cinsinden doz bulunamadı.",
+"No Gy dose values found in text for this selection.": "Bu seçim için metinde Gy cinsinden doz bulunamadı.",
+"No numeric data for this column.": "Bu kolon için sayısal veri yok.",
+"None of the matching records record a specific treated explant — this field is filled for about half the database, and is blank for this selection.": "Eşleşen kayıtların hiçbirinde belirli bir eksplant kaydı yok — bu alan veri tabanının yaklaşık yarısında dolu, bu seçimde ise boş.",
+"ZIP library still loading — try again in a moment.": "ZIP kütüphanesi hâlâ yükleniyor — birazdan tekrar deneyin.",
+"⏳ Building ZIP…": "⏳ ZIP hazırlanıyor…",
+"Generating demo dataset…": "Demo veri seti oluşturuluyor…",
+"✅ Demo data ready — all 9 modules available.": "✅ Demo veri hazır — 9 modülün tamamı kullanılabilir.",
+"Development Method × Trait (row-normalised %)": "Geliştirme Yöntemi × Özellik (satıra göre normalize %)",
+"Mutagen Usage — Decadal Shift": "Mutajen Kullanımı — On Yıllık Değişim",
+"Trait Focus — Decadal Shift": "Özellik Odağı — On Yıllık Değişim",
+"Crop × Mutagen Category": "Ürün × Mutajen Kategorisi",
+"Country × Mutagen Category": "Ülke × Mutajen Kategorisi",
+"Crop × Trait Category": "Ürün × Özellik Kategorisi",
+"Release year": "Tescil yılı",
+"Reported dose": "Raporlanan doz"
+};
+// Controlled vocabulary, derived categories and column ids — exact matches only.
+const TR_VOC={
+  "Yield":"Verim","Disease Resist.":"Hastalık Dir.","Abiotic Stress":"Abiyotik Stres","Maturity":"Olgunlaşma","Quality":"Kalite",
+  "Plant Arch.":"Bitki Mim.","Ornamental/Colour":"Süs/Renk","Pest Resist.":"Zararlı Dir.","Fibre/Industrial":"Lif/Endüstriyel",
+  "Agronomic":"Agronomik","Other":"Diğer","Others":"Diğerleri","Unknown":"Bilinmiyor","Physical":"Fiziksel","Chemical":"Kimyasal",
+  "Cereals":"Tahıllar","Legumes":"Baklagiller","Oilseeds":"Yağlı tohumlar","Fibre":"Lif bitkileri","Vegetables":"Sebzeler",
+  "Fruits":"Meyveler","Ornamentals":"Süs bitkileri","Industrial/Other crops":"Endüstriyel/Diğer ürünler",
+  "Asia":"Asya","Europe":"Avrupa","Africa":"Afrika","North America":"Kuzey Amerika",
+  "Latin America and the Caribbean":"Latin Amerika ve Karayipler","Australia and the Pacific":"Avustralya ve Pasifik",
+  "Seed":"Tohum","Vegetative propagates":"Vejetatif üretim materyali","In vitro culture":"İn vitro kültür",
+  "Pollen grains or anther":"Polen veya anter","Germinating Seeds":"Çimlenen tohumlar","Stem cuttings":"Gövde çelikleri",
+  "Rooted cuttings":"Köklü çelikler","Callus":"Kallus","tissue culture explants":"doku kültürü eksplantları","Bud":"Tomurcuk",
+  "Protoplasts":"Protoplastlar","Shoot cuttings":"Sürgün çelikleri","Minitubers":"Minitüberler","Seed potatoes":"Tohumluk patates",
+  "Anther culture":"Anter kültürü","Chimeric (vegetative)":"Kimerik (vejetatif)","Seed - Self pollination":"Tohum - kendileme",
+  "Gamma rays":"Gama ışınları","X-rays":"X-ışınları","Gamma rays - chronic":"Gama ışınları - kronik",
+  "Neutrons - fast neutrons":"Nötronlar - hızlı nötronlar","Neutrons - thermal neutrons":"Nötronlar - termal nötronlar",
+  "Cosmic rays":"Kozmik ışınlar","Lasers":"Lazerler","Neutrons":"Nötronlar","Ion beams":"İyon demetleri","Ion beam":"İyon demeti",
+  "Beta particles":"Beta parçacıkları","Gamma and X-rays - recurrent":"Gama ve X-ışınları - tekrarlı","Space mutagenesis":"Uzay mutagenezi",
+  "Gamma rays - Cobalt⁶⁰":"Gama ışınları - Kobalt⁶⁰","X-rays - soft":"X-ışınları - yumuşak","Carbon ion beams":"Karbon iyon demetleri",
+  "Fast neutrons":"Hızlı nötronlar","Carbon ions":"Karbon iyonları","Sodium azide":"Sodyum azid",
+  "Direct development of an induced mutant":"İndüklenmiş mutantın doğrudan geliştirilmesi","Direct mutant":"Doğrudan mutant",
+  "Crossing with one mutant":"Bir mutantla melezleme","Crossing with one mutant variety":"Bir mutant çeşitle melezleme",
+  "Crossing of two mutants":"İki mutantın melezlenmesi","Mutagenic treatment of breeding material (F1, F2, seeds, ect)":"Islah materyaline mutajen uygulaması (F1, F2, tohum vb.)",
+  "Mutagenic treatment of Hybrid F1 (a cross with a mutant line)":"F1 melezine mutajen uygulaması (mutant hatla melez)",
+  "Vegetative tissue isolated from a chimeric mutant":"Kimerik mutanttan ayrılmış vejetatif doku",
+  "Cross × mutant variety":"Melez × mutant çeşit","Cross × 1 mutant":"Melez × 1 mutant","Cross × 2 mutants":"Melez × 2 mutant",
+  "Mutagen on F1 hybrid":"F1 melezine mutajen","Mutagen on breeding material":"Islah materyaline mutajen",
+  "Annual":"Yıllık","Cumulative":"Kümülatif","Sen's slope":"Sen eğimi","Varieties":"Çeşit sayısı","Year":"Yıl","Decade":"On yıl",
+  "Count":"Sayı","Frequency":"Frekans","Dose (Gy)":"Doz (Gy)","Development":"Geliştirme"
+};
+// Column ids as they appear in selectors, titles and labels.
+const TR_COL={Crop:"Ürün",Country:"Ülke",Region:"Bölge",Species:"Tür",Decade:"On yıl",Crop_Group:"Ürün grubu",
+  Mutagen_Category:"Mutajen kategorisi",Mutagen_Type:"Mutajen tipi",Mutagen_Dose:"Mutajen dozu",Improved_Trait:"İyileştirilen özellik",
+  Treated_Explant:"Muamele edilen eksplant",Year_of_Release:"Tescil yılı",Breeding_Institution:"Islah kurumu",
+  Mutant_Development:"Mutant geliştirme",Propagation_Mode:"Çoğaltma şekli",Usage_Category:"Kullanım kategorisi",
+  Variety_Name:"Çeşit adı",explant:"eksplant",trait:"özellik",Trait:"Özellik",Explant:"Eksplant",Mutagen:"Mutajen"};
+const i18nCol=c=>TR_COL[c]||TR_VOC[c]||c;
+const i18nCross=s=>s.split(" × ").map(p=>i18nCol(p.trim())).join(" × ");
+const I18N_DEC={"0":"'lar","1":"'ler","2":"'ler","3":"'lar","4":"'lar","5":"'ler","6":"'lar","7":"'ler","8":"'ler","9":"'lar"};
+// Turkish decade suffix follows the spoken last word: 1980 → "seksen" → 1980'ler; 2000/1900 → "bin/yüz" → 'ler
+function i18nDecade(y){const d=y.slice(-2,-1);return y+(y.slice(-2)==="00"?"'ler":I18N_DEC[d]);}
+function i18nScope(s){ // "the whole dataset" | crop "X" | region R  (joined by ", ") → locative phrase
+  if(s==="the whole dataset")return "Tüm veri setinde";
+  return s.split(", ").map(p=>{let m=p.match(/^crop "(.+)"$/);if(m)return `"${m[1]}" ürününde`;m=p.match(/^region (.+)$/);if(m)return `${TR_VOC[m[1]]||m[1]} bölgesinde`;return p;}).join(" ve ");}
+const I18N_MK={"INCREASING ↑":"ARTIŞ ↑","DECREASING ↓":"AZALIŞ ↓","NO TREND →":"EĞİLİM YOK →",increasing:"artış",decreasing:"azalış","no trend":"eğilim yok"};
+const _IN="([\\d][\\d,.]*)";
+const _IR=(s,f)=>new RegExp(s,f||"");
+// Whole-string rules (applied to a full text node, alert, status line or chart string).
+const TR_RE=[
+  [_IR(`^Chi-Square Independence Test: (\\S+ × \\S+)$`),(m,x)=>`Ki-Kare Bağımsızlık Testi: ${i18nCross(x)}`],
+  [_IR(`^Ready: ${_IN} varieties · ${_IN} crops · ${_IN} countries$`),"Hazır: $1 çeşit · $2 ürün · $3 ülke"],
+  [_IR(`^✓ ${_IN} records$`),"✓ $1 kayıt"],
+  [_IR(`^Descriptive: (.+) · top (\\d+) · n=${_IN}$`),(m,c,t,n)=>`Tanımlayıcı: ${i18nCol(c)} · ilk ${t} · n=${n}`],
+  [_IR(`^(Release year|Reported dose|.+) summary · n=${_IN}$`),(m,l,n)=>`${l==="Release year"?"Tescil yılı":l==="Reported dose"?"Raporlanan doz":i18nCol(l)} özeti · n=${n}`],
+  [_IR(`^Dose histogram · ${_IN} of ${_IN} records had a Gy dose in text$`),"Doz histogramı · $2 kaydın $1 tanesinde metinde Gy dozu var"],
+  [_IR(`^MK: (INCREASING ↑|DECREASING ↓|NO TREND →) · p=(.+)$`),(m,t,p)=>`MK: ${I18N_MK[t]} · p=${p}`],
+  [_IR(`^Mann-Kendall: (increasing|decreasing|no trend) · p=(.+)$`),(m,t,p)=>`Mann-Kendall: ${I18N_MK[t]} · p=${p}`],
+  [_IR(`^Most varieties in (.+) used a dose around ${_IN} Gy\\.$`),(m,s,d)=>`${i18nScope(s)} çoğu çeşitte yaklaşık ${d} Gy doz kullanılmış.`],
+  [_IR(`^(Release year|.+) in (.+): typically (.+), ranging (.+)\\.$`),(m,l,s,t,r)=>`${i18nScope(s)} ${l==="Release year"?"tescil yılı":i18nCol(l)}: tipik olarak ${t}, aralık ${r}.`],
+  [_IR(`^Doses are read from the text of each record \\(≈half the database\\)\\. ${_IN} of ${_IN} matching records had a Gy dose recoverable from text\\. Treat as an indicative picture of reported doses, not a complete census\\.$`),
+     "Dozlar her kaydın metninden okunur (veri tabanının ≈yarısı). Eşleşen $2 kaydın $1 tanesinde metinden Gy dozu çıkarılabildi. Bunu raporlanan dozların gösterge niteliğinde bir tablosu olarak okuyun, eksiksiz bir sayım olarak değil."],
+  [_IR(`^⚠ Explant is recorded for only (\\d+)% of the ${_IN} matching records \\(${_IN} usable\\)\\. Read these proportions as indicative, not a full census\\.$`),
+     "⚠ Eksplant bilgisi eşleşen $2 kaydın yalnızca %$1'inde var ($3 kullanılabilir). Bu oranları gösterge olarak okuyun, eksiksiz bir sayım olarak değil."],
+  [_IR(`^→ Releases show a statistically significant (upward|downward) trend over time \\(p = (.+?)\\)\\. On average (.+?) varieties per year\\.$`),
+     (m,d,p,s)=>`→ Tescillerde zaman içinde istatistiksel olarak anlamlı bir ${d==="upward"?"artış":"azalış"} eğilimi var (p = ${p}). Yılda ortalama ${s} çeşit.`],
+  [_IR(`^→ No statistically significant trend: releases neither rose nor fell consistently over time \\(p = (.+?), so the change is within what chance would produce\\)\\.$`),
+     "→ İstatistiksel olarak anlamlı bir eğilim yok: tescil sayıları zaman içinde tutarlı biçimde artmamış ya da azalmamış (p = $1; değişim şansla açıklanabilecek düzeyde)."],
+  [_IR(`^⚠ Only ${_IN} records across (\\d+) years — quite sparse, so the test has little power to detect a trend even if one exists\\. Widen the filter \\(e\\.g\\. a whole crop or region\\) for a more reliable result\\.$`),
+     "⚠ $2 yıla yayılmış yalnızca $1 kayıt var — veri oldukça seyrek, bu yüzden bir eğilim olsa bile testin onu yakalama gücü düşük. Daha güvenilir sonuç için filtreyi genişletin (ör. ürünün tamamı ya da bir bölge)."],
+  [_IR(`^→ (.+) and (.+) are associated — the combinations differ from what independence would predict \\(p = (.+?)\\)\\.$`),
+     (m,a,b,p)=>`→ ${i18nCol(a)} ile ${i18nCol(b)} ilişkili — birleşimler bağımsızlık varsayımının öngördüğünden farklı (p = ${p}).`],
+  [_IR(`^→ No significant association: (.+) and (.+) look independent — differences are within chance \\(p = (.+?)\\)\\.$`),
+     (m,a,b,p)=>`→ Anlamlı bir ilişki yok: ${i18nCol(a)} ve ${i18nCol(b)} bağımsız görünüyor — farklar şans sınırları içinde (p = ${p}).`],
+  [_IR(`^⚠ Smallest expected cell is (.+?) \\(< 5\\)\\. The test is less reliable here — merge rare categories or widen the filter\\.$`),
+     "⚠ En küçük beklenen hücre değeri $1 (< 5). Bu durumda test daha az güvenilir — nadir kategorileri birleştirin veya filtreyi genişletin."],
+  [_IR(`^Reported Dose — mostly Gy \\(n=${_IN}, from text\\)$`),"Raporlanan Doz — çoğunlukla Gy (n=$1, metinden)"],
+  [_IR(`^Reported Gamma/Physical Dose \\(n=${_IN}, Gy from text\\)$`),"Raporlanan Gama/Fiziksel Doz  (n=$1, Gy metinden)"],
+  [_IR(`^Top (\\d+) Improved Traits$`),"En sık $1 iyileştirilen özellik"],
+  [_IR(`^Trait Categories \\(n=${_IN}\\)$`),"Özellik Kategorileri (n=$1)"],
+  [_IR(`^Mutagen Distribution \\(n=${_IN}\\)$`),"Mutajen Dağılımı (n=$1)"],
+  [_IR(`^(\\S+) Distribution \\(n=${_IN}\\)$`),(m,c,n)=>`${i18nCol(c)} Dağılımı  (n=${n})`],
+  [_IR(`^(\\S+) \\(n=${_IN}\\)$`),(m,c,n)=>TR_COL[c]?`${TR_COL[c]} (n=${n})`:m],
+  [_IR(`^(\\S+) — Distribution$`),(m,c)=>`${i18nCol(c)} — Dağılım`],
+  [_IR(`^(\\S+) — Top (\\d+)$`),(m,c,n)=>`${i18nCol(c)} — İlk ${n}`],
+  [_IR(`^(\\S+) — Treemap$`),(m,c)=>`${i18nCol(c)} — Ağaç Haritası`],
+  [_IR(`^(\\S+) counts by (\\S+)$`),(m,c,r)=>`${i18nCol(r)} bazında ${i18nCol(c)} sayıları`],
+  [_IR(`^(\\S+) % by (\\S+)$`),(m,c,r)=>`${i18nCol(r)} bazında ${i18nCol(c)} %`],
+  [_IR(`^(\\S+ × \\S+) — bubble grid \\(size = count\\)$`),(m,x)=>`${i18nCross(x)} — kabarcık ızgarası (boyut = sayı)`],
+  [_IR(`^Bubble grid: (\\S+ × \\S+)$`),(m,x)=>`Kabarcık ızgarası: ${i18nCross(x)}`],
+  [_IR(`^(\\S+ × \\S+) \\(χ²=(.+)\\)$`),(m,x,r)=>`${i18nCross(x)}  (χ²=${r})`],
+  [_IR(`^([A-Za-z_]+ × [A-Za-z_]+)$`),(m,x)=>{const t=i18nCross(x);return t!==x?t:m;}],
+  [_IR(`^Multi-Series by (\\S+) — (.+)$`),(m,c,l)=>`Çoklu Seri (${i18nCol(c)}) — ${i18nLbl(l)}`],
+  [_IR(`^(Annual Releases|Decadal Distribution|Releases & Cumulative) — (.+)$`),(m,t,l)=>`${{"Annual Releases":"Yıllık Tesciller","Decadal Distribution":"On Yıllık Dağılım","Releases & Cumulative":"Tesciller ve Kümülatif"}[t]} — ${i18nLbl(l)}`],
+  [_IR(`^(Top countries|Mutagens used|Trait focus|Treated explants|Institutions / agencies) — (.+)$`),(m,t,c)=>`${{"Top countries":"Öne çıkan ülkeler","Mutagens used":"Kullanılan mutajenler","Trait focus":"Özellik odağı","Treated explants":"Muamele edilen eksplantlar","Institutions / agencies":"Kurumlar / kuruluşlar"}[t]} — ${c}`],
+  [_IR(`^(.+) — Releases over time$`),"$1 — Zaman içinde tesciller"],
+  [_IR(`^Explant × Trait — (counts|row-normalised %) \\((.+)\\)$`),(m,k,l)=>`Eksplant × Özellik — ${k==="counts"?"sayılar":"satıra göre normalize %"} (${i18nLbl(l)})`],
+  [_IR(`^Explant × Trait (counts|row %) · (.+)$`),(m,k,l)=>`Eksplant × Özellik ${k==="counts"?"sayıları":"satır %"} · ${i18nLbl(l)}`],
+  [_IR(`^Explant × Trait \\(χ²=(.+)\\)$`),"Eksplant × Özellik  (χ²=$1)"],
+  [_IR(`^Explant × Trait χ²=(.+)$`),"Eksplant × Özellik χ²=$1"],
+  [_IR(`^Explant × Trait — (.+)$`),"Eksplant × Özellik — $1"],
+  [_IR(`^Crop Explorer: (.+) · ${_IN} varieties$`),"Ürün Gezgini: $1 · $2 çeşit"],
+  [_IR(`^Development × Trait · ${_IN} varieties$`),"Geliştirme × Özellik · $1 çeşit"],
+  [_IR(`^Temporal: (.+) · ${_IN} records$`),(m,l,n)=>`Zamansal: ${i18nLbl(l)} · ${n} kayıt`],
+  [_IR(`^Mean=(.+)$`),"Ortalama=$1"],
+  [_IR(`^All \\((.+)\\)$`),"Tümü ($1)"],
+  [_IR(`^Column '(.+)' not in dataset\\.$`),(m,c)=>`'${i18nCol(c)}' kolonu veri setinde yok.`],
+  [_IR(`^No varieties found for "(.+)"\\.$`),'"$1" için çeşit bulunamadı.'],
+  [_IR(`^No (.+) matches for "(.+)"$`),(m,c,v)=>`"${v}" için ${i18nCol(c)} eşleşmesi yok`],
+  [_IR(`^No crop / species matches "(.+)"$`),'"$1" ile eşleşen ürün / tür yok'],
+  [_IR(`^No matches for "(.+)"$`),'"$1" için eşleşme yok'],
+  [_IR(`^⚠ "(.+)" not found — did you mean:$`),'⚠ "$1" bulunamadı — bunu mu demek istediniz:'],
+  [_IR(`^Loading (.+)…$`),"$1 yükleniyor…"],[_IR(`^Reading (.+)…$`),"$1 okunuyor…"],
+  [_IR(`^⚠ No bundled MVD_DB\\.csv next to the app \\((.*)\\)\\. Use “Load Local CSV” or “Demo Data”\\.$`),"⚠ Uygulamanın yanında paketle gelen MVD_DB.csv bulunamadı ($1). “Yerel CSV Yükle” veya “Demo Veri” seçeneğini kullanın."],
+  [_IR(`^⏳ Rendering chart (\\d+)…$`),"⏳ Grafik $1 hazırlanıyor…"],
+  [_IR(`^✅ ZIP ready — (\\d+) chart\\(s\\) \\+ CSV \\+ report\\.( \\(Generate some charts first to include them\\.\\))?$`),
+     (m,n,e)=>`✅ ZIP hazır — ${n} grafik + CSV + rapor.${e?" (Pakete eklemek için önce birkaç grafik oluşturun.)":""}`],
+  [_IR(`^⚠ ZIP failed: (.*)$`),"⚠ ZIP oluşturulamadı: $1"],
+  [_IR(`^(\\d{3}0)s$`),(m,y)=>i18nDecade(y)],
+];
+// Inline-HTML rules for small result blocks whose numbers change.
+const TR_HRE=[
+  [_IR(`^Typical range \\(middle 50%\\): <strong>(.+?)</strong><br>Full spread: (.+?) Gy \\(lowest\\) to (.+?) Gy \\(highest\\)<br>Average: (.+?) Gy · Median: (.+?) Gy$`),
+     "Tipik aralık (ortadaki %50): <strong>$1</strong><br>Tüm yayılım: en düşük $2 Gy, en yüksek $3 Gy<br>Ortalama: $4 Gy · Medyan: $5 Gy"],
+  [_IR(`^Middle 50% fall between <strong>(.+?)</strong> and <strong>(.+?)</strong>\\.<br>Average (.+?), median (.+?), based on (.+?) records\\.$`),
+     "Ortadaki %50: <strong>$1</strong> – <strong>$2</strong>.<br>Ortalama $3, medyan $4; $5 kayda dayanır."],
+  [_IR(`^(<strong style="color:var\\(--accent\\)">.*</strong>.*) · ${_IN} varieties$`),"$1 · $2 çeşit"],
+];
+// Partial rules for text inside result boxes, status lines and chart hover/labels.
+const TR_PHR=[
+  [/Mann-Kendall Trend Test\b/g,"Mann-Kendall Trend Testi"],[/Mann-Kendall — All \(/g,"Mann-Kendall — Tümü ("],
+  [/Chi-Square Independence Test:/g,"Ki-Kare Bağımsızlık Testi:"],[/Chi-Square: Treated Explant × Trait Category/g,"Ki-Kare: Muamele Edilen Eksplant × Özellik Kategorisi"],
+  [/(\d+) explants × (\d+) trait categories/g,"$1 eksplant × $2 özellik kategorisi"],[/\btrait assignments\b/g,"özellik ataması"],
+  [/\bFilter: /g,"Filtre: "],[/\bSen's slope\b/g,"Sen eğimi"],[/\bKendall's τ\b/g,"Kendall τ"],[/\bp-value\b/g,"p-değeri"],
+  [/\bmin expected\b/g,"en küçük beklenen"],[/\bdf :/g,"sd :"],[/\bvarieties \/ year\b/g,"çeşit / yıl"],
+  [/([\d][\d,.]*) varieties\b/g,"$1 çeşit"],[/([\d][\d,.]*) records\b/g,"$1 kayıt"],[/([\d][\d,.]*) years\b/g,"$1 yıl"],
+  [/\bAll MVD\b/g,"Tüm MVD"],[/\bCount: /g,"Sayı: "],[/% of this method/g,"% (bu yöntem içinde)"],[/% of this explant/g,"% (bu eksplant içinde)"],
+  [/\bExplant: /g,"Eksplant: "],[/\bTrait: /g,"Özellik: "],[/\bCrop: /g,"Ürün: "],[/\bCountry: /g,"Ülke: "],
+  [/\bRegion: (Asia|Europe|Africa|North America|Latin America and the Caribbean|Australia and the Pacific)\b/g,(m,c)=>"Bölge: "+TR_VOC[c]],[/\bRegion: /g,"Bölge: "],
+  [/\b(Crop_Group|Mutagen_Category|Mutagen_Type|Mutagen_Dose|Improved_Trait|Treated_Explant|Year_of_Release|Breeding_Institution|Mutant_Development|Propagation_Mode|Usage_Category|Variety_Name)\b/g,(m,c)=>TR_COL[c]],
+];
+const i18nLbl=l=>i18nStr(l,true)||l;
+const _hasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const _nrm=s=>s.replace(/\s+/g," ").trim();
+// Translate one string. partial=true also applies the phrase rules.
+function i18nStr(s,partial){
+  const k=_nrm(String(s));if(!k)return null;
+  if(_hasOwn(TR_UI,k))return TR_UI[k];
+  if(_hasOwn(TR_VOC,k))return TR_VOC[k];
+  for(const[re,rep]of TR_RE){if(re.test(k))return k.replace(re,rep);}
+  if(!partial)return null;
+  let out=String(s).replace(/^\s+|\s+$/g,""),ch=false;
+  for(const[re,rep]of TR_PHR){const o=out.replace(re,rep);if(o!==out){out=o;ch=true;}}
+  if(!ch)return null;
+  // phrase pass may have produced a line that a whole-string rule now matches (e.g. a verdict with column ids)
+  return out;
+}
+const I18N_INLINE=new Set(["STRONG","EM","B","I","SPAN","BR","A","SUP","SUB","SMALL","U","CODE"]);
+const I18N_SKIP=new Set(["SCRIPT","STYLE","PRE","TEXTAREA","SVG","CODE"]);
+function _i18nSkip(el){for(let e=el;e&&e.nodeType===1;e=e.parentElement){if(I18N_SKIP.has(e.tagName))return true;if(e.hasAttribute("data-noi18n"))return true;const c=e.classList;if(c&&(c.contains("js-plotly-plot")||c.contains("plot-container")))return true;}return false;}
+const _onlyInline=el=>[...el.children].every(c=>I18N_INLINE.has(c.tagName)&&_onlyInline(c));
+const _hasText=el=>[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
+function _trText(node){
+  if(node.__en!==undefined)return;
+  const raw=node.textContent;if(!/[A-Za-z]/.test(raw))return;
+  const inTable=node.parentElement&&node.parentElement.closest("td");
+  // multi-line result text (Mann-Kendall / Chi-Square boxes): translate line by line
+  let t;
+  if(raw.includes("\n")){const lines=raw.split("\n");let ch=false;const o=lines.map(l=>{const r=/[A-Za-z]/.test(l)?i18nStr(l,true):null;if(r==null)return l;ch=true;const lead=l.match(/^\s*/)[0];return lead+r;});t=ch?o.join("\n"):null;}
+  else t=i18nStr(raw,!inTable);
+  if(t==null)return;
+  const lead=raw.match(/^\s*/)[0],trail=raw.match(/\s*$/)[0];
+  node.__en=raw;node.textContent=raw.includes("\n")?t:lead+t+trail;node.__tr=node.textContent;I18N.touched.add(node);
+}
+function _trAttrs(el){
+  for(const a of["placeholder","title"]){const v=el.getAttribute(a);if(!v||!/[A-Za-z]/.test(v))continue;
+    el.__enAttr=el.__enAttr||{};if(el.__enAttr[a]!==undefined)continue;const t=i18nStr(v,false);if(t==null)continue;
+    el.__enAttr[a]=v;el.setAttribute(a,t);I18N.touched.add(el);}
+}
+function i18nTree(root){
+  if(!root)return;
+  if(root.nodeType===3){if(root.parentElement&&!_i18nSkip(root.parentElement))_trText(root);return;}
+  if(root.nodeType!==1||_i18nSkip(root))return;
+  _trAttrs(root);
+  if(_hasText(root)&&_onlyInline(root)&&root.__enHTML===undefined){
+    const key=_nrm(root.innerHTML);
+    let t=_hasOwn(TR_UI,key)?TR_UI[key]:null;
+    if(t==null)for(const[re,rep]of TR_HRE){if(re.test(key)){t=key.replace(re,rep);break;}}
+    if(t!=null&&t!==key){root.__enHTML=root.innerHTML;root.innerHTML=t;I18N.touched.add(root);return;}
+  }
+  for(const c of[...root.childNodes])i18nTree(c);
+}
+function i18nRevert(){
+  for(const x of I18N.touched){
+    if(x.nodeType===3){if(x.__en!==undefined&&x.textContent===x.__tr)x.textContent=x.__en;delete x.__en;delete x.__tr;}
+    else{if(x.__enHTML!==undefined){x.innerHTML=x.__enHTML;delete x.__enHTML;}
+      if(x.__enAttr){for(const[a,v]of Object.entries(x.__enAttr))x.setAttribute(a,v);delete x.__enAttr;}}
+  }
+  I18N.touched.clear();
+}
+function _i18nPaused(fn){if(I18N.obs)I18N.obs.disconnect();try{fn();}finally{if(I18N.obs&&I18N.lang==="tr")I18N.obs.observe(document.body,{childList:true,subtree:true,characterData:true});}}
+function _i18nOnMut(muts){
+  _i18nPaused(()=>{for(const m of muts){
+    const t=m.target;const el=t.nodeType===3?t.parentElement:t;
+    if(!el||_i18nSkip(el))continue;
+    // the app rewrote content we had swapped — forget the stale English copy
+    for(let e=el;e&&e!==document.body;e=e.parentElement){if(e.__enHTML!==undefined){delete e.__enHTML;I18N.touched.delete(e);}}
+    if(m.type==="characterData"){if(t.__en!==undefined&&t.textContent!==t.__tr){delete t.__en;delete t.__tr;I18N.touched.delete(t);}_trText(t);}
+    else m.addedNodes.forEach(n=>i18nTree(n));
+  }});
+}
+// Chart text: titles, axes, legend, trace names, hover templates and category labels.
+function i18nPlot(traces,layout){
+  const T=s=>typeof s==="string"?(i18nStr(s,true)??s):s;
+  const tt=(o,k)=>{if(!o||o[k]==null)return;if(typeof o[k]==="string")o[k]=T(o[k]);else if(typeof o[k].text==="string")o[k].text=T(o[k].text);};
+  const A=a=>Array.isArray(a)?a.map(v=>typeof v==="string"?(_hasOwn(TR_VOC,v)?TR_VOC[v]:/^\d{3}0s$/.test(v)?i18nDecade(v.slice(0,4)):v):v):a;
+  if(layout){tt(layout,"title");Object.keys(layout).forEach(k=>{if(/^[xy]axis\d*$/.test(k)&&layout[k]){tt(layout[k],"title");if(layout[k].ticktext)layout[k].ticktext=A(layout[k].ticktext);if(layout[k].categoryarray)layout[k].categoryarray=A(layout[k].categoryarray);}});
+    if(layout.legend)tt(layout.legend,"title");(layout.annotations||[]).forEach(a=>{if(typeof a.text==="string"&&/[A-Za-z]{3}/.test(a.text))a.text=T(a.text);});}
+  (traces||[]).forEach(d=>{if(!d)return;if(typeof d.name==="string")d.name=_hasOwn(TR_VOC,d.name)?TR_VOC[d.name]:T(d.name);
+    if(typeof d.hovertemplate==="string")d.hovertemplate=T(d.hovertemplate);
+    ["x","y","labels","parents","ids"].forEach(k=>{if(d[k])d[k]=A(d[k]);});
+    if(d.marker&&d.marker.colorbar)tt(d.marker.colorbar,"title");if(d.colorbar)tt(d.colorbar,"title");});
+}
+(function(){const _np=Plotly.newPlot.bind(Plotly);Plotly.newPlot=function(id,traces,layout,config){
+  if(I18N.lang==="tr"){try{traces=JSON.parse(JSON.stringify(traces));layout=layout?JSON.parse(JSON.stringify(layout)):layout;i18nPlot(traces,layout);}catch(e){}}
+  return _np(id,traces,layout,config);};})();
+(function(){const _al=window.alert.bind(window);window.alert=m=>_al(I18N.lang==="tr"?(i18nStr(String(m),true)??m):m);})();
+// Summary report (plain text that is also saved / zipped).
+const TR_REP_HDR={"OVERVIEW":"GENEL BAKIŞ","TOP 10 CROPS":"EN ÇOK 10 ÜRÜN","TOP 10 COUNTRIES":"EN ÇOK 10 ÜLKE","BY REGION":"BÖLGELERE GÖRE",
+  "MUTAGEN CATEGORY":"MUTAJEN KATEGORİSİ","DECADAL DISTRIBUTION":"ON YILLIK DAĞILIM","TOP 10 IMPROVED TRAITS":"EN SIK 10 İYİLEŞTİRİLEN ÖZELLİK"};
+const TR_REP_LBL={"Total varieties":"Toplam çeşit","Crop species":"Ürün türü","Countries":"Ülke","Regions":"Bölge","Year range":"Yıl aralığı","Missing year %":"Yılı eksik %"};
+function i18nReport(txt){
+  return txt.split("\n").map(l=>{
+    let m=l.match(/^── (.+?) (─+)$/);if(m&&TR_REP_HDR[m[1]]){const h=TR_REP_HDR[m[1]];return "── "+h+" "+"─".repeat(Math.max(3,l.length-h.length-4));}
+    m=l.match(/^(\s+)(.+?)(\s*): (.*)$/);
+    if(m){const k=m[2];const t=TR_REP_LBL[k]||TR_VOC[k];if(t){const w=(k+m[3]).length;return m[1]+t.padEnd(w)+": "+m[4];}}
+    m=l.match(/^(\s+)(\d{3}0)s(\s+)(.*)$/);if(m){const d=i18nDecade(m[2]);return m[1]+d.padEnd(m[2].length+1+m[3].length)+m[4];}
+    return l.replace("MVD Analysis Suite — Summary Report","MVD Analysis Suite — Özet Rapor").replace(/^(\s+)Generated:/,"$1Oluşturulma:")
+            .replace(/^(\s+)Data: /,"$1Veri: ").replace(/^(\s+)Citation: /,"$1Atıf: ");
+  }).join("\n");
+}
+function i18nReadme(made){return `MVD Analysis Suite — dışa aktarım paketi\nOluşturulma: ${new Date().toLocaleString("tr-TR")}\n\nİçerik:\n  mvd_processed_data.csv   — türetilmiş kolonlarla tam veri seti\n  mvd_summary_report.txt   — veri seti özeti\n  charts/                  — bu oturumda oluşturulan ${made} grafik görüntüsü\n\nVeri: IAEA Mutant Variety Database (mvd.iaea.org)\nNot: Grafiklerdeki veri değerleri (ürün, ülke, çeşit adları) IAEA kaydındaki özgün hâliyle bırakılmıştır.\n`;}
+function setLang(l){
+  l=l==="tr"?"tr":"en";const prev=I18N.lang;I18N.lang=l;
+  try{localStorage.setItem("mvd-lang",l);}catch(e){}
+  document.documentElement.lang=l;
+  document.querySelectorAll("#langsw button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));
+  if(l==="tr"){
+    if(!I18N.obs)I18N.obs=new MutationObserver(_i18nOnMut);
+    _i18nPaused(()=>i18nTree(document.body));
+  }else{
+    if(I18N.obs)I18N.obs.disconnect();
+    i18nRevert();
+  }
+  if(prev!==l){
+    // redraw every chart already on screen in the new language (from its stored English source)
+    Object.keys(__lastPlot).forEach(id=>{const el=document.getElementById(id);if(el&&el.querySelector(".plot-container"))resetView(id);});
+    const rb=document.getElementById("rep-box");if(rb&&rb.dataset.txt&&G.rows.length)genRep();
+  }
+}
+function i18nInit(){
+  // Default is English; a saved choice or ?lang=tr in the link switches to Turkish.
+  let l="en";
+  try{const q=new URLSearchParams(location.search).get("lang");if(q==="tr"||q==="en")l=q;else{const s=localStorage.getItem("mvd-lang");if(s)l=s;}}catch(e){}
+  const _gr=genRep;genRep=function(){_gr();if(I18N.lang!=="tr")return;const rb=document.getElementById("rep-box");if(!rb||!rb.dataset.txt)return;const t=i18nReport(rb.dataset.txt);_i18nPaused(()=>{rb.textContent=t;});rb.dataset.txt=t;};
+  if(l==="tr")setLang("tr");
+}
+
 // ── RESET VIEW ────────────────────────────────────────────────────
 // Record a DEEP CLONE of every render so "Reset view" fully restores the chart
 // (clears legend isolation, slice pull, zoom). Cloning is essential: Plotly mutates
@@ -1256,7 +1972,7 @@ function mDonut(){if(!chk())return;const rows=getMR(),data=vc(rows,"Mutagen_Cate
 function mDecade(){if(!chk())return;const rows=getMR().filter(r=>r._year);const cats=vc(rows,"Mutagen_Category",6).map(x=>x.key);const decs=[...new Set(rows.map(r=>Math.floor(r._year/10)*10))].sort();const ct={};decs.forEach(d=>{ct[d]={};cats.forEach(c=>ct[d][c]=0);});rows.forEach(r=>{const d=Math.floor(r._year/10)*10;if(ct[d])ct[d][r.Mutagen_Category]=(ct[d][r.Mutagen_Category]||0)+1;});Plotly.newPlot("m-chart",cats.map((c,i)=>({type:"bar",name:c,x:decs.map(d=>d+"s"),y:decs.map(d=>ct[d][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Mutagen Usage — Decadal Shift"),barmode:"stack",xaxis:{title:"Decade"},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:450,margin:{l:65,r:20,t:52,b:85}},PC);}
 function mCropHeat(){if(!chk())return;const rows=getMR();const tc=vc(rows,"Crop",18).map(x=>x.key);const cats=vc(rows,"Mutagen_Category",6).map(x=>x.key);const ct={};tc.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(ct[r.Crop]&&ct[r.Crop][r.Mutagen_Category]!==undefined)ct[r.Crop][r.Mutagen_Category]++;});Plotly.newPlot("m-chart",[{type:"heatmap",x:cats,y:tc,z:tc.map(c=>cats.map(m=>ct[c][m]||0)),colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL("Crop × Mutagen Category"),height:Math.max(420,tc.length*28+120),margin:{l:145,r:20,t:52,b:85},xaxis:{tickangle:-30},yaxis:{automargin:true}},PC);}
 function mCountry(){if(!chk())return;const rows=getMR();const tco=vc(rows,"Country",15).map(x=>x.key);const cats=vc(rows,"Mutagen_Category",4).map(x=>x.key);const ct={};tco.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(ct[r.Country]&&ct[r.Country][r.Mutagen_Category]!==undefined)ct[r.Country][r.Mutagen_Category]++;});Plotly.newPlot("m-chart",cats.map((c,i)=>({type:"bar",name:c,x:tco,y:tco.map(k=>ct[k][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Country × Mutagen Category"),barmode:"stack",xaxis:{tickangle:-35,automargin:true},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:460,margin:{l:65,r:20,t:52,b:115}},PC);}
-function mDose(){if(!chk())return;const vals=getMR().map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);if(!vals.length){alert("No dose values were found in the descriptions for this selection. Dose is extracted from text and is present for roughly half of records.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;Plotly.newPlot("m-chart",[{type:"histogram",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(0)} Gy`}],{...PL(`Reported Dose — mostly Gy (n=${vals.length.toLocaleString()}, from text)`),height:430,margin:{l:65,r:20,t:52,b:65},xaxis:{title:"Dose (Gy)"},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);}
+function mDose(){if(!chk())return;const vals=getMR().map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);if(!vals.length){alert("No dose values were found in the descriptions for this selection. Dose is extracted from text and is present for roughly half of records.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;Plotly.newPlot("m-chart",[{type:"histogram",name:"Varieties",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(0)} Gy`}],{...PL(`Reported Dose — mostly Gy (n=${vals.length.toLocaleString()}, from text)`),height:430,margin:{l:65,r:20,t:52,b:65},xaxis:{title:"Dose (Gy)"},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);}
 
 // ── TRAIT ────────────────────────────────────────────────────────
 function getTrR(){const reg=document.getElementById("tr-reg").value;let r=filt({crop:document.getElementById("tr-crop").value.trim(),country:document.getElementById("tr-co").value.trim(),region:reg});const cg=document.getElementById("tr-cg");if(cg&&cg.value)r=r.filter(x=>x.Crop_Group===cg.value);return r;}
@@ -1315,7 +2031,7 @@ function runNS(){if(!chk())return;const col=document.getElementById("ns-col").va
       `<div style="margin-top:8px;line-height:1.7">Middle 50% fall between <strong>${q1}</strong> and <strong>${q3}</strong>.<br>Average ${mean.toFixed(1)}, median ${med.toFixed(0)}, based on ${n.toLocaleString()} records.</div></div>`;
   }
   setSt(`${lbl} summary · n=${n.toLocaleString()}`);}
-function runHist(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const rows=filt({crop:document.getElementById("ns-crop").value.trim(),region:reg});const isDose=col==="Mutagen_Dose";let vals;if(isDose){vals=rows.filter(r=>!r._DoseUnit||/gy/.test(r._DoseUnit)).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}if(!vals.length){alert(isDose?"No Gy dose values were found in the descriptions for this selection.":"No numeric data for this column.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;const ax=isDose?"Dose (Gy)":col;Plotly.newPlot("ns-chart",[{type:"histogram",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(isDose?0:1)}${isDose?" Gy":""}`}],{...PL(`${isDose?"Reported Gamma/Physical Dose":col+" Distribution"}  (n=${vals.length.toLocaleString()}${isDose?", Gy from text":""})`),height:370,margin:{l:65,r:20,t:52,b:65},xaxis:{title:ax},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);if(isDose)setSt(`Dose histogram · ${vals.length.toLocaleString()} of ${rows.length.toLocaleString()} records had a Gy dose in text`);}
+function runHist(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const rows=filt({crop:document.getElementById("ns-crop").value.trim(),region:reg});const isDose=col==="Mutagen_Dose";let vals;if(isDose){vals=rows.filter(r=>!r._DoseUnit||/gy/.test(r._DoseUnit)).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}if(!vals.length){alert(isDose?"No Gy dose values were found in the descriptions for this selection.":"No numeric data for this column.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;const ax=isDose?"Dose (Gy)":col;Plotly.newPlot("ns-chart",[{type:"histogram",name:"Varieties",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(isDose?0:1)}${isDose?" Gy":""}`}],{...PL(`${isDose?"Reported Gamma/Physical Dose":col+" Distribution"}  (n=${vals.length.toLocaleString()}${isDose?", Gy from text":""})`),height:370,margin:{l:65,r:20,t:52,b:65},xaxis:{title:ax},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);if(isDose)setSt(`Dose histogram · ${vals.length.toLocaleString()} of ${rows.length.toLocaleString()} records had a Gy dose in text`);}
 
 
 // ── CROP EXPLORER ────────────────────────────────────────────────
@@ -1535,13 +2251,15 @@ async function exportZip(){
       }catch(e){/* skip a chart that won't render */}
     }
     // 4) a small manifest
-    zip.file("README.txt",`MVD Analysis Suite — export bundle\nGenerated: ${new Date().toLocaleString()}\n\nContents:\n  mvd_processed_data.csv   — full dataset with derived columns\n  mvd_summary_report.txt   — dataset summary\n  charts/                  — ${made} chart image(s) generated this session\n\nData: IAEA Mutant Variety Database (mvd.iaea.org)\n`);
+    zip.file("README.txt",I18N.lang==="tr"?i18nReadme(made):`MVD Analysis Suite — export bundle\nGenerated: ${new Date().toLocaleString()}\n\nContents:\n  mvd_processed_data.csv   — full dataset with derived columns\n  mvd_summary_report.txt   — dataset summary\n  charts/                  — ${made} chart image(s) generated this session\n\nData: IAEA Mutant Variety Database (mvd.iaea.org)\n`);
     const blob=await zip.generateAsync({type:"blob"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);
     a.download=`mvd_export_${new Date().toISOString().slice(0,10)}.zip`;a.click();
     st.textContent=`✅ ZIP ready — ${made} chart(s) + CSV + report.${made===0?" (Generate some charts first to include them.)":""}`;
   }catch(e){st.textContent="⚠ ZIP failed: "+e.message;}
 }
+
+i18nInit();
 </script>
 </body>
 </html>
