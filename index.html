@@ -61,6 +61,7 @@ select:focus,input:focus{border-color:var(--iaea)}select{cursor:pointer}
 .bs{background:rgba(0,90,142,.18);border:1px solid var(--iaea);color:var(--accent);min-height:34px;padding:6px 13px;font-size:12.5px}
 .btn:hover{opacity:.84;transform:translateY(-1px)}.btn:active{transform:none}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.dpar{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap;align-self:center}.dpar input{accent-color:var(--accent);width:15px;height:15px;margin:0}
 .tw{overflow:auto;max-height:350px;border-radius:8px;border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--bg2);color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--border);text-align:left}
@@ -618,6 +619,7 @@ plt.tight_layout(); plt.savefig(<span class="fn">"mvd_stacked.png"</span>, dpi=1
         <button class="btn bam" onclick="mCropHeat()">🔥 Crop × Mutagen</button>
         <button class="btn bpu" onclick="mCountry()">🌍 Country Compare</button>
         <button class="btn bo" onclick="mDose()">📊 Dose Histogram</button>
+        <label class="dpar" title="Varieties bred by crossing with an irradiated mutant: the dose was applied to the parent mutant, not to this variety's own material."><input type="checkbox" id="dose-par-m" checked> Include parent-mutant doses</label>
       </div>
       <div class="chb" id="m-chart" style="min-height:420px"></div>
       <div class="dl-row"><button class="btn bs" onclick="resetView('m-chart')" title="Restore the full chart after isolating bars/slices">↺ Reset view</button><button class="btn bs" onclick="dlC('m-chart','mutagen','png')">⬇ PNG</button><button class="btn bs" onclick="dlC('m-chart','mutagen','svg')">⬇ SVG</button></div>
@@ -851,7 +853,7 @@ chi2, p, dof, expected = <span class="fn">chi2_contingency</span>(ct)
       <div class="ct">🔢 Descriptive Statistics — Numeric Columns</div>
       <div class="doc" style="margin:0 0 12px">
         <span class="dtag">DOSE FROM TEXT</span>
-        The MVD export has no dedicated dose column. Where a dose appears in a variety's description (e.g. <em>"gamma rays (200 Gy)"</em>), the suite extracts it into <strong>Mutagen Dose</strong> — recovered for roughly <strong>half</strong> of all records, almost always in <strong>Gy</strong>. Treat it as an indicative distribution of reported doses, not a complete census. Year of Release is fully numeric.
+        The MVD export has no dedicated dose column. Where a dose appears in a variety's description (e.g. <em>"gamma rays (200 Gy)"</em>), the suite extracts it into <strong>Mutagen Dose</strong> — recovered for roughly <strong>half</strong> of all records, almost always in <strong>Gy</strong>. Each match is checked in context: dose rates (Gy/h, Gy per day) and LD50/GR50 values are skipped, lists of tested doses (“200, 300 and 400 Gy”) and roentgen (kR) values are left out, and krad is converted to Gy (×10). Doses that belong to an irradiated <strong>parent mutant</strong> used in a cross are flagged and can be excluded with the checkbox. Every decision is listed in <strong>dose_audit.csv</strong> (Export). Treat it as an indicative distribution of reported doses, not a complete census. Year of Release is fully numeric.
       </div>
       <div class="cb">
         <label>Column:</label>
@@ -862,6 +864,7 @@ chi2, p, dof, expected = <span class="fn">chi2_contingency</span>(ct)
         <select id="ns-reg" class="region-sel"><option value="">All regions</option></select>
         <button class="btn bp" onclick="runNS()">▶ Summary</button>
         <button class="btn ba" onclick="runHist()">📊 Histogram</button>
+        <label class="dpar" title="Varieties bred by crossing with an irradiated mutant: the dose was applied to the parent mutant, not to this variety's own material."><input type="checkbox" id="dose-par-ns" checked> Include parent-mutant doses</label>
       </div>
       <div class="two">
         <div class="tw" id="ns-tbl"></div>
@@ -940,6 +943,7 @@ print(<span class="fn">"SIGNIFICANT"</span> <span class="kw">if</span> p &lt; 0.
       <ul>
         <li><strong>Complete ZIP bundle:</strong> one click packages the filtered/processed CSV, the summary report, and a PNG of every chart you've generated this session — ready to archive or share</li>
         <li><strong>Processed CSV:</strong> full dataset enriched with derived columns (Region, Mutagen_Category, Crop_Group, Decade) — ready for further analysis in Python, R or Excel</li>
+        <li><strong>Dose Audit CSV:</strong> every dose read from text with the matched snippet, the field it came from and the decision (direct / parent mutant / list / kR / dose rate) — for manual checking</li>
         <li><strong>Summary Report:</strong> auto-generated plain-text — top crops, countries, regions, decadal distribution, top traits — paste-ready for a methods/results section</li>
         <li><strong>Chart downloads:</strong> every chart has ⬇ PNG (2× scale ≈ 300 dpi) and ⬇ SVG (vector, infinitely scalable) buttons — use SVG for journal figures</li>
       </ul>
@@ -950,6 +954,7 @@ print(<span class="fn">"SIGNIFICANT"</span> <span class="kw">if</span> p &lt; 0.
       <div class="btn-row">
         <button class="btn bp" onclick="exportZip()">🗜️ Download Everything (ZIP)</button>
         <button class="btn ba" onclick="expCSV()">📥 Processed CSV</button>
+        <button class="btn bpu" onclick="expDoseAudit()">🔎 Dose Audit CSV</button>
         <button class="btn bam" onclick="genRep()">📋 Generate Summary Report</button>
         <button class="btn bo" onclick="saveRep()">💾 Save Report (.txt)</button>
       </div>
@@ -992,7 +997,11 @@ const KEY_MAP={variety:"Variety_Name",name:"Variety_Name",variety_name:"Variety_
   treatment_material_type:"Treated_Explant",mutantdevelopmenttype:"Mutant_Development",
   propagationmodetype:"Propagation_Mode",usagesubcategory:"Usage_Category",
   national_registration_agency:"Breeding_Institution",local_registration_agency:"_LocalAgency",
-  short_description:"_Description",miscellaneous:"_Misc",mutantvarietyid:"_ID"};
+  short_description:"_Description",miscellaneous:"_Misc",mutantvarietyid:"_ID",
+  // ── Newer "Mutant Variety Database Search" export (2026) ──
+  region:"_Continent",improved_trait_general:"_TraitGen",improved_trait_specific:"_TraitSpec",
+  usage_category_type:"_UsageType",variety_type:"_VarType",propagation_media:"_PropMedia",
+  mutagenesis_treatment_institution:"_MutInst"};
 const PAL=["#005A8E","#00A19A","#E07B00","#6B3FA0","#E74C3C","#27AE60","#F39C12","#9B59B6","#1ABC9C","#E67E22","#2980B9","#C0392B","#16A085","#8E44AD"];
 const PL=(t,x={})=>({title:{text:t,font:{color:"#E4EEF8",size:14,family:"Segoe UI"}},paper_bgcolor:"#172E44",plot_bgcolor:"#122336",font:{color:"#7A9BBB",family:"Segoe UI",size:11},xaxis:{gridcolor:"#243F5C",zerolinecolor:"#243F5C",...(x.xaxis||{})},yaxis:{gridcolor:"#243F5C",zerolinecolor:"#243F5C",...(x.yaxis||{})},margin:{l:130,r:20,t:52,b:78},...x});
 const PC={responsive:true,displaylogo:false,modeBarButtonsToRemove:["select2d","lasso2d"],toImageButtonOptions:{scale:2}};
@@ -1075,25 +1084,62 @@ function processData(raw,rawCols){
   // was obtained (r._provenance) so nothing is a black box. An optional LLM fallback
   // could later populate the same fields, but is intentionally OFF here — every value
   // below is a literal match a user can find in the source text.
-  const DOSE=/(\d+(?:\.\d+)?)(?:\s?[-–]\s?(\d+(?:\.\d+)?))?\s?(gy|gray|kgy|krad|krads|kr)\b/i;
-  function extractDose(...texts){
-    for(const t of texts){if(!t)continue;const m=DOSE.exec(t);if(m){
-      let unit=m[3].toLowerCase();if(unit==="gray")unit="gy";if(unit==="kr")unit="krad";
-      let val=parseFloat(m[1]);if(m[2])val=(val+parseFloat(m[2]))/2; // midpoint of a range
-      if(unit==="kgy"){val=val*1000;unit="gy";}
-      return{val,unit};}}
+  // DOSE — every number+radiation-unit match is checked against its context before it is accepted.
+  //   rate   "12.5 Gy/min", "0.15 Gy per day"         → skipped (dose rate, not a dose)
+  //   ld50   "LD50 … 300 Gy"                            → skipped (radiosensitivity test value)
+  //   list   "doses of 200, 300 and 400 Gy"             → recorded but NOT used (which dose gave the variety is unknown)
+  //   kR     "20 kR" (roentgen = exposure, not absorbed dose) → recorded but NOT used
+  //   parent "hybridization with mutant X obtained by … (200 Gy)" → used, flagged: dose applied to a parent mutant
+  //   direct anything else                               → used
+  // krad is converted exactly (1 krad = 10 Gy), kGy ×1000; a range "200-300 Gy" / "200 to 300 Gy" becomes its midpoint.
+  const DOSE_G=/(\d+(?:\.\d+)?)(?:\s?[-–]\s?(\d+(?:\.\d+)?))?\s?(gy|gray|kgy|krads?|kr)\b/gi;
+  const D_RATE=/^\s?(?:\/|per\s)\s?(?:h|hrs?|hours?|min|minutes?|s|sec|d|days?)\b/i;
+  const D_LIST=/(?:^|[^\d.])(\d{1,4}(?:\.\d+)?)\s?(?:,|&|and|or)\s?$/i;
+  const D_TO=/(?:^|[^\d.])(\d+(?:\.\d+)?)\s?(?:to|~|～)\s?$/i;
+  const D_LD=/\b(?:ld|gr|rd|gd)\s?-?50\b/i;
+  const D_PAR=/hybridi[sz](?:ation|ed)|crossing|crossed|\bcross(?:es)?\s(?:with|between|of)\b|父本|母本/i;
+  function classifyDose(t){
+    let skipped=null;DOSE_G.lastIndex=0;let m;
+    while((m=DOSE_G.exec(t))){
+      const before=t.slice(Math.max(0,m.index-200),m.index),after=t.slice(m.index+m[0].length,m.index+m[0].length+15);
+      const snip=t.slice(Math.max(0,m.index-90),m.index+m[0].length+30).replace(/\s+/g," ").trim();
+      if(D_RATE.test(after)){skipped=skipped||{flag:"rate",match:m[0],snip};continue;}
+      if(D_LD.test(before.slice(-30))){skipped=skipped||{flag:"ld50",match:m[0],snip};continue;}
+      let u=m[3].toLowerCase(),v=parseFloat(m[1]);
+      if(m[2])v=(v+parseFloat(m[2]))/2;else{const tm=D_TO.exec(before);if(tm)v=(parseFloat(tm[1])+v)/2;}
+      const lm=D_LIST.exec(before);
+      if(lm&&!m[2]&&!(lm[1].length===4&&+lm[1]>=1900&&+lm[1]<=2100))return{flag:"list",match:m[0],snip,val:v,unit:u==="gray"?"gy":u};
+      if(u==="kr")return{flag:"kR",match:m[0],snip,val:v,unit:"kR"};
+      if(u.startsWith("krad"))v=v*10;else if(u==="kgy")v=v*1000;
+      const dot=before.lastIndexOf(". "),sent=dot>=0?before.slice(dot+1):before;
+      let flag=(D_PAR.test(sent)&&/mutant/i.test(sent))?"parent":"direct";
+      if(!(v>0&&v<=2000))flag="range";
+      return{flag,match:m[0],snip,val:Math.round(v*100)/100,unit:"gy"};
+    }
+    return skipped;
+  }
+  function extractDose(fields){
+    for(const[name,t] of fields){if(!t)continue;const d=classifyDose(String(t));if(d){d.field=name;return d;}}
     return null;
   }
+  // Newer exports repeat a value once per treatment ("Seeds, Seeds, Seeds") or leave empty slots (", ,").
+  // Collapse these to the distinct values so counts are not split across spellings.
+  const dedup=v=>{if(!v)return v;const parts=[];String(v).split(",").map(s=>s.trim()).filter(Boolean).forEach(s=>{if(!parts.includes(s))parts.push(s);});return parts.join(", ");};
   G.rows.forEach(r=>{
     r._provenance={};
+    ["_PhysMut","_ChemMut","_MutCat","Treated_Explant"].forEach(k=>{if(r[k]!==undefined)r[k]=dedup(r[k]);});
+    if(r.Treated_Explant==="Seeds")r.Treated_Explant="Seed";
     if(!r.Mutagen_Type){r.Mutagen_Type=r._PhysMut||r._ChemMut||"";}
     r._mutCatExplicit=(r._MutCat||"").trim();
     if(!r.Year_of_Release&&r._LocalYear)r.Year_of_Release=r._LocalYear;
     if(!r.Breeding_Institution&&r._LocalAgency)r.Breeding_Institution=r._LocalAgency;
     // DOSE — scan structured mutagen fields first (e.g. "Gamma rays, 200Gy"), then description, then misc
     if(!r.Mutagen_Dose){
-      const d=extractDose(r._PhysMut,r._ChemMut,r._Description,r._Misc);
-      if(d){r.Mutagen_Dose=String(d.val);r._DoseUnit=d.unit;r._provenance.dose="text";}
+      const d=extractDose([["Physical Mutagen",r._PhysMut],["Chemical Mutagen",r._ChemMut],["Short Description",r._Description],["Miscellaneous",r._Misc]]);
+      if(d){
+        r._DoseAudit=d;r._DoseFlag=d.flag;r._provenance.dose="text";
+        if(d.flag==="direct"||d.flag==="parent"){r.Mutagen_Dose=String(d.val);r._DoseUnit="gy";}
+      }
     }
     if(r.Mutagen_Dose&&!r._DoseUnit)r._DoseUnit="";
     // MUTAGEN gap-fill from text when the structured field is empty (high-precision keywords only)
@@ -1185,7 +1231,7 @@ const I18N={lang:"en",obs:null,touched:new Set()};
 const TR_UI={
 ", not when mutations were induced.": ", ne zaman mutasyon oluşturulduğunu değil.",
 "9 Analysis Modules": "9 Analiz Modülü",
-"<span class=\"dtag\">DOSE FROM TEXT</span> The MVD export has no dedicated dose column. Where a dose appears in a variety's description (e.g. <em>\"gamma rays (200 Gy)\"</em>), the suite extracts it into <strong>Mutagen Dose</strong> — recovered for roughly <strong>half</strong> of all records, almost always in <strong>Gy</strong>. Treat it as an indicative distribution of reported doses, not a complete census. Year of Release is fully numeric.": "<span class=\"dtag\">METİNDEN DOZ</span> MVD dışa aktarımında ayrı bir doz kolonu yoktur. Bir çeşidin açıklamasında doz yazılıysa (ör. <em>\"gamma rays (200 Gy)\"</em>) uygulama bu değeri <strong>Mutajen Dozu</strong> alanına çıkarır — kayıtların yaklaşık <strong>yarısında</strong> bulunur, neredeyse tamamı <strong>Gy</strong> cinsindendir. Bunu raporlanan dozların gösterge niteliğinde bir dağılımı olarak okuyun, eksiksiz bir sayım olarak değil. Tescil yılı tamamen sayısaldır.",
+"<span class=\"dtag\">DOSE FROM TEXT</span> The MVD export has no dedicated dose column. Where a dose appears in a variety's description (e.g. <em>\"gamma rays (200 Gy)\"</em>), the suite extracts it into <strong>Mutagen Dose</strong> — recovered for roughly <strong>half</strong> of all records, almost always in <strong>Gy</strong>. Each match is checked in context: dose rates (Gy/h, Gy per day) and LD50/GR50 values are skipped, lists of tested doses (“200, 300 and 400 Gy”) and roentgen (kR) values are left out, and krad is converted to Gy (×10). Doses that belong to an irradiated <strong>parent mutant</strong> used in a cross are flagged and can be excluded with the checkbox. Every decision is listed in <strong>dose_audit.csv</strong> (Export). Treat it as an indicative distribution of reported doses, not a complete census. Year of Release is fully numeric.": "<span class=\"dtag\">METİNDEN DOZ</span> MVD dışa aktarımında ayrı bir doz kolonu yoktur. Bir çeşidin açıklamasında doz yazılıysa (ör. <em>\"gamma rays (200 Gy)\"</em>) uygulama bu değeri <strong>Mutajen Dozu</strong> alanına çıkarır — kayıtların yaklaşık <strong>yarısında</strong> bulunur, neredeyse tamamı <strong>Gy</strong> cinsindendir. Her eşleşme bağlamıyla kontrol edilir: doz hızları (Gy/sa, günlük Gy) ve LD50/GR50 değerleri atlanır, denenen doz listeleri (“200, 300 ve 400 Gy”) ve röntgen (kR) değerleri dışarıda bırakılır, krad Gy'ye çevrilir (×10). Çaprazlamada kullanılan ışınlanmış bir <strong>ebeveyn mutanta</strong> ait dozlar işaretlenir ve onay kutusuyla hariç tutulabilir. Tüm kararlar <strong>dose_audit.csv</strong> dosyasında listelenir (Dışa Aktar). Bunu raporlanan dozların gösterge niteliğinde bir dağılımı olarak okuyun, eksiksiz bir sayım olarak değil. Tescil yılı tamamen sayısaldır.",
 "<span class=\"ic\">🌍</span>Cross-Table &amp; Compare": "<span class=\"ic\">🌍</span>Çapraz Tablo &amp; Karşılaştırma",
 "<span class=\"ic\">🌿</span>Crop Explorer": "<span class=\"ic\">🌿</span>Ürün Gezgini",
 "<span class=\"ic\">🏠</span>Overview &amp; Data": "<span class=\"ic\">🏠</span>Genel Bakış &amp; Veri",
@@ -1618,6 +1664,10 @@ const TR_UI={
 "Crop × Mutagen Category": "Ürün × Mutajen Kategorisi",
 "Country × Mutagen Category": "Ülke × Mutajen Kategorisi",
 "Crop × Trait Category": "Ürün × Özellik Kategorisi",
+"Include parent-mutant doses": "Ebeveyn mutant dozlarını dahil et",
+"Varieties bred by crossing with an irradiated mutant: the dose was applied to the parent mutant, not to this variety's own material.": "Işınlanmış bir mutantla çaprazlanarak geliştirilen çeşitler: doz bu çeşidin kendi materyaline değil, ebeveyn mutanta uygulanmıştır.",
+"🔎 Dose Audit CSV": "🔎 Doz Kontrol CSV",
+"<strong>Dose Audit CSV:</strong> every dose read from text with the matched snippet, the field it came from and the decision (direct / parent mutant / list / kR / dose rate) — for manual checking": "<strong>Doz Kontrol CSV:</strong> metinden okunan her doz; eşleşen metin parçası, geldiği alan ve verilen karar (doğrudan / ebeveyn mutant / liste / kR / doz hızı) ile — elle kontrol için",
 "Release year": "Tescil yılı",
 "Reported dose": "Raporlanan doz"
 };
@@ -1680,8 +1730,8 @@ const TR_RE=[
   [_IR(`^Mann-Kendall: (increasing|decreasing|no trend) · p=(.+)$`),(m,t,p)=>`Mann-Kendall: ${I18N_MK[t]} · p=${p}`],
   [_IR(`^Most varieties in (.+) used a dose around ${_IN} Gy\\.$`),(m,s,d)=>`${i18nScope(s)} çoğu çeşitte yaklaşık ${d} Gy doz kullanılmış.`],
   [_IR(`^(Release year|.+) in (.+): typically (.+), ranging (.+)\\.$`),(m,l,s,t,r)=>`${i18nScope(s)} ${l==="Release year"?"tescil yılı":i18nCol(l)}: tipik olarak ${t}, aralık ${r}.`],
-  [_IR(`^Doses are read from the text of each record \\(≈half the database\\)\\. ${_IN} of ${_IN} matching records had a Gy dose recoverable from text\\. Treat as an indicative picture of reported doses, not a complete census\\.$`),
-     "Dozlar her kaydın metninden okunur (veri tabanının ≈yarısı). Eşleşen $2 kaydın $1 tanesinde metinden Gy dozu çıkarılabildi. Bunu raporlanan dozların gösterge niteliğinde bir tablosu olarak okuyun, eksiksiz bir sayım olarak değil."],
+  [_IR(`^Doses are read from the text of each record \\(≈half the database\\)\\. ${_IN} of ${_IN} matching records had a Gy dose recoverable from text(?: \\((?:${_IN} of them from a parent mutant|parent-mutant doses excluded: ${_IN})\\))?(?:; ${_IN} record\\(s\\) list several tested doses and are left out)?\\. Treat as an indicative picture of reported doses, not a complete census\\.$`),
+     (m,n,N,p1,p2,l)=>`Dozlar her kaydın metninden okunur (veri tabanının ≈yarısı). Eşleşen ${N} kaydın ${n} tanesinde metinden Gy dozu çıkarılabildi`+(p1?` (${p1} tanesi ebeveyn mutanttan)`:p2?` (ebeveyn mutant dozları hariç: ${p2})`:"")+(l?`; ${l} kayıt birden çok denenen doz listelediği için dışarıda bırakıldı`:"")+`. Bunu raporlanan dozların gösterge niteliğinde bir tablosu olarak okuyun, eksiksiz bir sayım olarak değil.`],
   [_IR(`^⚠ Explant is recorded for only (\\d+)% of the ${_IN} matching records \\(${_IN} usable\\)\\. Read these proportions as indicative, not a full census\\.$`),
      "⚠ Eksplant bilgisi eşleşen $2 kaydın yalnızca %$1'inde var ($3 kullanılabilir). Bu oranları gösterge olarak okuyun, eksiksiz bir sayım olarak değil."],
   [_IR(`^→ Releases show a statistically significant (upward|downward) trend over time \\(p = (.+?)\\)\\. On average (.+?) varieties per year\\.$`),
@@ -1861,7 +1911,7 @@ function i18nReport(txt){
             .replace(/^(\s+)Data: /,"$1Veri: ").replace(/^(\s+)Citation: /,"$1Atıf: ");
   }).join("\n");
 }
-function i18nReadme(made){return `MVD Analysis Suite — dışa aktarım paketi\nOluşturulma: ${new Date().toLocaleString("tr-TR")}\n\nİçerik:\n  mvd_processed_data.csv   — türetilmiş kolonlarla tam veri seti\n  mvd_summary_report.txt   — veri seti özeti\n  charts/                  — bu oturumda oluşturulan ${made} grafik görüntüsü\n\nVeri: IAEA Mutant Variety Database (mvd.iaea.org)\nNot: Grafiklerdeki veri değerleri (ürün, ülke, çeşit adları) IAEA kaydındaki özgün hâliyle bırakılmıştır.\n`;}
+function i18nReadme(made){return `MVD Analysis Suite — dışa aktarım paketi\nOluşturulma: ${new Date().toLocaleString("tr-TR")}\n\nİçerik:\n  mvd_processed_data.csv   — türetilmiş kolonlarla tam veri seti\n  mvd_summary_report.txt   — veri seti özeti\n  dose_audit.csv           — metinden okunan her doz, metin parçası ve kararıyla\n  charts/                  — bu oturumda oluşturulan ${made} grafik görüntüsü\n\nVeri: IAEA Mutant Variety Database (mvd.iaea.org)\nNot: Grafiklerdeki veri değerleri (ürün, ülke, çeşit adları) IAEA kaydındaki özgün hâliyle bırakılmıştır.\n`;}
 function setLang(l){
   l=l==="tr"?"tr":"en";const prev=I18N.lang;I18N.lang=l;
   try{localStorage.setItem("mvd-lang",l);}catch(e){}
@@ -1972,7 +2022,8 @@ function mDonut(){if(!chk())return;const rows=getMR(),data=vc(rows,"Mutagen_Cate
 function mDecade(){if(!chk())return;const rows=getMR().filter(r=>r._year);const cats=vc(rows,"Mutagen_Category",6).map(x=>x.key);const decs=[...new Set(rows.map(r=>Math.floor(r._year/10)*10))].sort();const ct={};decs.forEach(d=>{ct[d]={};cats.forEach(c=>ct[d][c]=0);});rows.forEach(r=>{const d=Math.floor(r._year/10)*10;if(ct[d])ct[d][r.Mutagen_Category]=(ct[d][r.Mutagen_Category]||0)+1;});Plotly.newPlot("m-chart",cats.map((c,i)=>({type:"bar",name:c,x:decs.map(d=>d+"s"),y:decs.map(d=>ct[d][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Mutagen Usage — Decadal Shift"),barmode:"stack",xaxis:{title:"Decade"},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:450,margin:{l:65,r:20,t:52,b:85}},PC);}
 function mCropHeat(){if(!chk())return;const rows=getMR();const tc=vc(rows,"Crop",18).map(x=>x.key);const cats=vc(rows,"Mutagen_Category",6).map(x=>x.key);const ct={};tc.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(ct[r.Crop]&&ct[r.Crop][r.Mutagen_Category]!==undefined)ct[r.Crop][r.Mutagen_Category]++;});Plotly.newPlot("m-chart",[{type:"heatmap",x:cats,y:tc,z:tc.map(c=>cats.map(m=>ct[c][m]||0)),colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#00A19A"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL("Crop × Mutagen Category"),height:Math.max(420,tc.length*28+120),margin:{l:145,r:20,t:52,b:85},xaxis:{tickangle:-30},yaxis:{automargin:true}},PC);}
 function mCountry(){if(!chk())return;const rows=getMR();const tco=vc(rows,"Country",15).map(x=>x.key);const cats=vc(rows,"Mutagen_Category",4).map(x=>x.key);const ct={};tco.forEach(c=>{ct[c]={};cats.forEach(m=>ct[c][m]=0);});rows.forEach(r=>{if(ct[r.Country]&&ct[r.Country][r.Mutagen_Category]!==undefined)ct[r.Country][r.Mutagen_Category]++;});Plotly.newPlot("m-chart",cats.map((c,i)=>({type:"bar",name:c,x:tco,y:tco.map(k=>ct[k][c]||0),marker:{color:PAL[i%PAL.length]}})),{...PL("Country × Mutagen Category"),barmode:"stack",xaxis:{tickangle:-35,automargin:true},yaxis:{title:"Varieties"},legend:{font:{color:"#E4EEF8",size:10}},height:460,margin:{l:65,r:20,t:52,b:115}},PC);}
-function mDose(){if(!chk())return;const vals=getMR().map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);if(!vals.length){alert("No dose values were found in the descriptions for this selection. Dose is extracted from text and is present for roughly half of records.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;Plotly.newPlot("m-chart",[{type:"histogram",name:"Varieties",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(0)} Gy`}],{...PL(`Reported Dose — mostly Gy (n=${vals.length.toLocaleString()}, from text)`),height:430,margin:{l:65,r:20,t:52,b:65},xaxis:{title:"Dose (Gy)"},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);}
+function doseVals(rows,boxId){const b=document.getElementById(boxId);const inc=!b||b.checked;return rows.filter(r=>r._DoseUnit==="gy"&&(inc||r._DoseFlag!=="parent")).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}
+function mDose(){if(!chk())return;const vals=doseVals(getMR(),"dose-par-m");if(!vals.length){alert("No dose values were found in the descriptions for this selection. Dose is extracted from text and is present for roughly half of records.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;Plotly.newPlot("m-chart",[{type:"histogram",name:"Varieties",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(0)} Gy`}],{...PL(`Reported Dose — mostly Gy (n=${vals.length.toLocaleString()}, from text)`),height:430,margin:{l:65,r:20,t:52,b:65},xaxis:{title:"Dose (Gy)"},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);}
 
 // ── TRAIT ────────────────────────────────────────────────────────
 function getTrR(){const reg=document.getElementById("tr-reg").value;let r=filt({crop:document.getElementById("tr-crop").value.trim(),country:document.getElementById("tr-co").value.trim(),region:reg});const cg=document.getElementById("tr-cg");if(cg&&cg.value)r=r.filter(x=>x.Crop_Group===cg.value);return r;}
@@ -2011,13 +2062,13 @@ function trDevel(){
 function runChi(){if(!chk())return;const v1=document.getElementById("chi1").value,v2=document.getElementById("chi2").value,topN=parseInt(document.getElementById("chi-n").value)||10;const t1=vc(G.rows,v1,topN).map(x=>x.key),t2=vc(G.rows,v2,topN).map(x=>x.key);const rows=G.rows.filter(r=>t1.includes(r[v1])&&t2.includes(r[v2]));if(!rows.length){alert("No data.");return;}const obs=t1.map(a=>t2.map(b=>rows.filter(r=>r[v1]===a&&r[v2]===b).length));const rT=obs.map(r=>r.reduce((s,v)=>s+v,0));const cT=t2.map((_,j)=>obs.reduce((s,r)=>s+r[j],0));const N=rows.length;const exp=t1.map((_,i)=>t2.map((_,j)=>rT[i]*cT[j]/N));let chi2=0,minE=Infinity;obs.forEach((r,i)=>r.forEach((o,j)=>{const e=exp[i][j];if(e<minE)minE=e;if(e>0)chi2+=(o-e)**2/e;}));const dof=(t1.length-1)*(t2.length-1);const p=chiP(chi2,dof);const cv=chiVerdict(chi2,p,dof,minE,v1,v2);document.getElementById("chi-res").innerHTML=`${"─".repeat(52)}\n  Chi-Square Independence Test: ${v1} × ${v2}\n  N = ${N.toLocaleString()}\n${"─".repeat(52)}\n${cv.pline}\n  χ² : ${chi2.toFixed(3)}     df : ${dof}     min expected : ${minE.toFixed(2)}\n${"─".repeat(52)}\n${cv.verdict}${cv.sparse}`;Plotly.newPlot("chi-chart",[{type:"heatmap",x:t2,y:t1,z:obs,colorscale:[[0,"#122336"],[.5,"#003F6B"],[1,"#005A8E"]],texttemplate:"%{z}",textfont:{size:10,color:"#E4EEF8"}}],{...PL(`${v1} × ${v2}  (χ²=${chi2.toFixed(2)}, p=${p.toFixed(4)})`),height:Math.max(300,t1.length*28+100),margin:{l:165,r:20,t:52,b:115},xaxis:{tickangle:-35},yaxis:{automargin:true}},PC);setSt(`χ²=${chi2.toFixed(2)}, p=${p.toFixed(4)}, dof=${dof}`);}
 function runMK2(){if(!chk())return;const fc=document.getElementById("mk2-col").value,fv=document.getElementById("mk2-val").value.trim(),y1=parseInt(document.getElementById("mk2-y1").value)||1960,y2=parseInt(document.getElementById("mk2-y2").value)||2024;const rows=filt({fcol:fc||"",fval:fv||""}).filter(r=>r._year&&r._year>=y1&&r._year<=y2);const ann=annArr(rows);if(ann.length<4){document.getElementById("mk2-res").textContent="⚠ Need at least 4 years.";return;}const res=MK(ann.map(x=>x.count));const total=ann.reduce((s,x)=>s+x.count,0);const lbl=(fc&&fv)?`${fc}: "${fv}"`:`All (${y1}–${y2})`;const v=mkVerdict(res,ann.length,total);document.getElementById("mk2-res").innerHTML=`${"─".repeat(52)}\n  Mann-Kendall — ${lbl}  |  ${ann.length} years  |  ${total.toLocaleString()} varieties\n${"─".repeat(52)}\n${v.pline}\n  Sen's slope : ${res.slope.toFixed(3)} varieties / year\n  Kendall's τ : ${res.tau.toFixed(4)}\n${"─".repeat(52)}\n${v.verdict}${v.sparse}`;const yrs=ann.map(x=>x.year),cnts=ann.map(x=>x.count),cums=ann.map(x=>x.cum);Plotly.newPlot("mk2-chart",[{type:"bar",x:yrs,y:cnts,name:"Annual",marker:{color:"#005A8E"},yaxis:"y"},{type:"scatter",x:yrs,y:cnts.map((_,i)=>cnts[0]+res.slope*i),name:"Sen's slope",line:{color:"#E07B00",width:2,dash:"dash"},yaxis:"y"},{type:"scatter",x:yrs,y:cums,name:"Cumulative",line:{color:"#00A19A",width:2},yaxis:"y2"}],{...PL(`${lbl}`),height:380,yaxis:{title:"Annual",gridcolor:"#243F5C"},yaxis2:{title:"Cumulative",overlaying:"y",side:"right"},legend:{x:.02,y:.98,font:{color:"#E4EEF8",size:10}},margin:{l:65,r:80,t:52,b:65}},PC);setSt(`MK: ${res.trend} · p=${res.p.toFixed(4)}`);}
 function runNS(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const cropf=document.getElementById("ns-crop").value.trim();const rows=filt({crop:cropf,region:reg});const isDose=col==="Mutagen_Dose";
-  let vals;if(isDose){vals=rows.filter(r=>!r._DoseUnit||/gy/.test(r._DoseUnit)).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}
+  let vals;if(isDose){vals=doseVals(rows,"dose-par-ns");}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}
   if(!vals.length){document.getElementById("ns-tbl").innerHTML='<div class="rb">No '+(isDose?"Gy dose values found in text for this selection.":"numeric data for this column.")+'</div>';return;}
   vals.sort((a,b)=>a-b);const n=vals.length,mean=vals.reduce((s,v)=>s+v,0)/n,med=n%2===0?(vals[n/2-1]+vals[n/2])/2:vals[Math.floor(n/2)],std=Math.sqrt(vals.reduce((s,v)=>s+(v-mean)**2,0)/(n-1)),q1=vals[Math.floor(n*.25)],q3=vals[Math.floor(n*.75)];
   const u=isDose?" Gy":"";const lbl=isDose?"Reported dose":(col==="Year_of_Release"?"Release year":col);
   const scope=[cropf&&`crop "${cropf}"`,reg&&`region ${reg}`].filter(Boolean).join(", ")||"the whole dataset";
   if(isDose){
-    const cov=`${n.toLocaleString()} of ${rows.length.toLocaleString()} matching records had a Gy dose recoverable from text`;
+    const inc=document.getElementById("dose-par-ns").checked;const npar=rows.filter(r=>r._DoseFlag==="parent"&&r._DoseUnit==="gy").length;const nlist=rows.filter(r=>r._DoseFlag==="list").length;const cov=`${n.toLocaleString()} of ${rows.length.toLocaleString()} matching records had a Gy dose recoverable from text`+(inc?` (${npar.toLocaleString()} of them from a parent mutant)`:` (parent-mutant doses excluded: ${npar.toLocaleString()})`)+(nlist?`; ${nlist.toLocaleString()} record(s) list several tested doses and are left out`:"");
     document.getElementById("ns-tbl").innerHTML=`<div class="rb">`+
       `<div class="verdict ok" style="font-size:14px">Most varieties in ${scope} used a dose around ${med.toFixed(0)} Gy.</div>`+
       `<div style="margin-top:8px;line-height:1.7">`+
@@ -2031,7 +2082,7 @@ function runNS(){if(!chk())return;const col=document.getElementById("ns-col").va
       `<div style="margin-top:8px;line-height:1.7">Middle 50% fall between <strong>${q1}</strong> and <strong>${q3}</strong>.<br>Average ${mean.toFixed(1)}, median ${med.toFixed(0)}, based on ${n.toLocaleString()} records.</div></div>`;
   }
   setSt(`${lbl} summary · n=${n.toLocaleString()}`);}
-function runHist(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const rows=filt({crop:document.getElementById("ns-crop").value.trim(),region:reg});const isDose=col==="Mutagen_Dose";let vals;if(isDose){vals=rows.filter(r=>!r._DoseUnit||/gy/.test(r._DoseUnit)).map(r=>parseFloat(r.Mutagen_Dose)).filter(v=>!isNaN(v)&&v>0&&v<=2000);}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}if(!vals.length){alert(isDose?"No Gy dose values were found in the descriptions for this selection.":"No numeric data for this column.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;const ax=isDose?"Dose (Gy)":col;Plotly.newPlot("ns-chart",[{type:"histogram",name:"Varieties",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(isDose?0:1)}${isDose?" Gy":""}`}],{...PL(`${isDose?"Reported Gamma/Physical Dose":col+" Distribution"}  (n=${vals.length.toLocaleString()}${isDose?", Gy from text":""})`),height:370,margin:{l:65,r:20,t:52,b:65},xaxis:{title:ax},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);if(isDose)setSt(`Dose histogram · ${vals.length.toLocaleString()} of ${rows.length.toLocaleString()} records had a Gy dose in text`);}
+function runHist(){if(!chk())return;const col=document.getElementById("ns-col").value,reg=document.getElementById("ns-reg").value;const rows=filt({crop:document.getElementById("ns-crop").value.trim(),region:reg});const isDose=col==="Mutagen_Dose";let vals;if(isDose){vals=doseVals(rows,"dose-par-ns");}else{vals=rows.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));}if(!vals.length){alert(isDose?"No Gy dose values were found in the descriptions for this selection.":"No numeric data for this column.");return;}const mean=vals.reduce((s,v)=>s+v,0)/vals.length;const ax=isDose?"Dose (Gy)":col;Plotly.newPlot("ns-chart",[{type:"histogram",name:"Varieties",x:vals,nbinsx:40,marker:{color:"#005A8E",line:{color:"#00A19A",width:.5}}},{type:"scatter",mode:"lines",x:[mean,mean],y:[0,vals.length/5],line:{color:"#E07B00",width:2,dash:"dash"},name:`Mean=${mean.toFixed(isDose?0:1)}${isDose?" Gy":""}`}],{...PL(`${isDose?"Reported Gamma/Physical Dose":col+" Distribution"}  (n=${vals.length.toLocaleString()}${isDose?", Gy from text":""})`),height:370,margin:{l:65,r:20,t:52,b:65},xaxis:{title:ax},yaxis:{title:"Frequency"},legend:{font:{color:"#E4EEF8",size:10}}},PC);if(isDose)setSt(`Dose histogram · ${vals.length.toLocaleString()} of ${rows.length.toLocaleString()} records had a Gy dose in text`);}
 
 
 // ── CROP EXPLORER ────────────────────────────────────────────────
@@ -2219,6 +2270,13 @@ function exTbl(){
 
 // ── EXPORT ───────────────────────────────────────────────────────
 function expCSV(){if(!G.rows.length){alert("Load data first.");return;}const cols=G.cols.filter(c=>!c.startsWith("_"));const csv=[cols.join(","),...G.rows.map(r=>cols.map(c=>`"${(r[c]||"").replace(/"/g,'""')}"`).join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="mvd_processed.csv";a.click();}
+function doseAuditCSV(){const H=["MutantVarietyID","Variety_Name","Crop","Country","Field","Matched_Text","Dose_Gy","Decision","Used_In_Stats","Context"];
+  const why={direct:"direct dose",parent:"dose applied to a parent mutant (cross)",list:"list of tested doses — not used",kR:"roentgen (exposure) unit — not used",rate:"dose rate — skipped",ld50:"LD50/GR50 value — skipped",range:"outside 0–2000 Gy — not used"};
+  const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const lines=[H.join(",")];G.rows.forEach(r=>{const d=r._DoseAudit;if(!d)return;const used=r._DoseUnit==="gy"&&(d.flag==="direct"||d.flag==="parent");
+    lines.push([r._ID||"",r.Variety_Name||"",r.Crop||"",r.Country||"",d.field||"",d.match,(d.unit==="gy"&&d.val!=null)?d.val:"",why[d.flag]||d.flag,used?"yes":"no",d.snip].map(q).join(","));});
+  return "\ufeff"+lines.join("\n");}
+function expDoseAudit(){if(!G.rows.length){alert("Load data first.");return;}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([doseAuditCSV()],{type:"text/csv"}));a.download="dose_audit.csv";a.click();}
 function genRep(){if(!G.rows.length){alert("Load data first.");return;}const r=G.rows,n=r.length,years=r.map(x=>x._year).filter(Boolean);const lines=["=".repeat(60),"  MVD Analysis Suite — Summary Report",`  Generated: ${new Date().toLocaleString()}`,"  Data: IAEA Mutant Variety Database (mvd.iaea.org)","=".repeat(60),"","── OVERVIEW ─────────────────────────────────────────────",`  Total varieties : ${n.toLocaleString()}`,`  Crop species    : ${[...new Set(r.map(x=>x.Crop).filter(Boolean))].length.toLocaleString()}`,`  Countries       : ${[...new Set(r.map(x=>x.Country).filter(Boolean))].length.toLocaleString()}`,`  Regions         : ${[...new Set(r.map(x=>x.Region).filter(x=>x&&x!=="Unknown"))].length}`,`  Year range      : ${years.length?Math.min(...years)+"–"+Math.max(...years):"—"}`,`  Missing year %  : ${(r.filter(x=>!x._year).length/n*100).toFixed(1)}%`,"","── TOP 10 CROPS ────────────────────────────────────────"];vc(r,"Crop",10).forEach(({key,count},i)=>lines.push(`  ${String(i+1).padStart(2,"0")}. ${key.padEnd(34)}${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── TOP 10 COUNTRIES ────────────────────────────────────");vc(r,"Country",10).forEach(({key,count},i)=>lines.push(`  ${String(i+1).padStart(2,"0")}. ${key.padEnd(34)}${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── BY REGION ────────────────────────────────────────────");vc(r,"Region",8).forEach(({key,count})=>lines.push(`  ${key.padEnd(20)}: ${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── MUTAGEN CATEGORY ────────────────────────────────────");vc(r,"Mutagen_Category",5).forEach(({key,count})=>lines.push(`  ${key.padEnd(20)}: ${String(count).padStart(6)}  (${(count/n*100).toFixed(1)}%)`));lines.push("","── DECADAL DISTRIBUTION ────────────────────────────────");const dec={};r.filter(x=>x._decade).forEach(x=>dec[x._decade]=(dec[x._decade]||0)+1);const mxD=Math.max(...Object.values(dec));Object.entries(dec).sort().forEach(([d,c])=>lines.push(`  ${d.padEnd(6)} ${String(c).padStart(5)}  ${"█".repeat(Math.round(c/mxD*24))}`));if(G.cols.includes("Improved_Trait")){const ts=splitT(r);const t10=Object.entries(ts.reduce((a,t)=>{a[t]=(a[t]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,10);lines.push("","── TOP 10 IMPROVED TRAITS ──────────────────────────────");t10.forEach(([k,v],i)=>lines.push(`  ${String(i+1).padStart(2,"0")}. ${k.padEnd(38)}${String(v).padStart(5)}  (${(v/ts.length*100).toFixed(1)}%)`));}lines.push("","=".repeat(60),"  Citation: IAEA Mutant Variety Database — https://mvd.iaea.org","=".repeat(60));const txt=lines.join("\n");document.getElementById("rep-box").textContent=txt;document.getElementById("rep-box").dataset.txt=txt;}
 function saveRep(){const txt=document.getElementById("rep-box").dataset.txt;if(!txt||txt.includes("Click")){genRep();setTimeout(()=>{const t=document.getElementById("rep-box").dataset.txt;if(t){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download="mvd_report.txt";a.click();}},200);return;}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));a.download="mvd_report.txt";a.click();}
 // Bundle everything generated this session into a single ZIP.
@@ -2232,6 +2290,7 @@ async function exportZip(){
     const cols=G.cols.filter(c=>!c.startsWith("_"));
     const csv=[cols.join(","),...G.rows.map(r=>cols.map(c=>`"${(r[c]||"").replace(/"/g,'""')}"`).join(","))].join("\n");
     zip.file("mvd_processed_data.csv",csv);
+    zip.file("dose_audit.csv",doseAuditCSV());
     // 2) summary report (generate if needed)
     genRep();const rep=document.getElementById("rep-box").dataset.txt||"";
     zip.file("mvd_summary_report.txt",rep);
@@ -2251,7 +2310,7 @@ async function exportZip(){
       }catch(e){/* skip a chart that won't render */}
     }
     // 4) a small manifest
-    zip.file("README.txt",I18N.lang==="tr"?i18nReadme(made):`MVD Analysis Suite — export bundle\nGenerated: ${new Date().toLocaleString()}\n\nContents:\n  mvd_processed_data.csv   — full dataset with derived columns\n  mvd_summary_report.txt   — dataset summary\n  charts/                  — ${made} chart image(s) generated this session\n\nData: IAEA Mutant Variety Database (mvd.iaea.org)\n`);
+    zip.file("README.txt",I18N.lang==="tr"?i18nReadme(made):`MVD Analysis Suite — export bundle\nGenerated: ${new Date().toLocaleString()}\n\nContents:\n  mvd_processed_data.csv   — full dataset with derived columns\n  mvd_summary_report.txt   — dataset summary\n  dose_audit.csv           — every dose read from text, with snippet and decision\n  charts/                  — ${made} chart image(s) generated this session\n\nData: IAEA Mutant Variety Database (mvd.iaea.org)\n`);
     const blob=await zip.generateAsync({type:"blob"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);
     a.download=`mvd_export_${new Date().toISOString().slice(0,10)}.zip`;a.click();
